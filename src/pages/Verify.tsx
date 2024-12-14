@@ -33,79 +33,52 @@ const Verify = () => {
         currentTime: now
       });
 
-      // First, get all recent codes for this email for debugging
-      const { data: recentCodes, error: recentError } = await supabase
-        .from('otp_codes')
-        .select('*')
-        .eq('email', email)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      console.log('Recent codes found:', recentCodes);
-      
-      if (recentError) {
-        console.error('Error fetching recent codes:', recentError);
-        throw new Error('Error checking recent codes');
-      }
-
-      // Now try to find the specific code
-      const { data: otpData, error: otpError } = await supabase
+      // First, check if the code exists at all
+      const { data: existingCode, error: existingError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
         .eq('code', otp)
-        .eq('used', false)
-        .gt('expires_at', now)
-        .order('created_at', { ascending: false })
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to avoid 406 error
 
-      console.log('Verification query result:', {
-        data: otpData,
-        error: otpError,
-        queryTime: now
+      console.log('Existing code check:', {
+        code: existingCode,
+        error: existingError
       });
 
-      if (otpError) {
-        if (otpError.code === 'PGRST116') {
-          // No matching row found, let's find out why
-          const { data: existingCode } = await supabase
-            .from('otp_codes')
-            .select('*')
-            .eq('email', email)
-            .eq('code', otp)
-            .single();
+      if (existingError) {
+        console.error('Error checking code:', existingError);
+        throw new Error('Error checking verification code');
+      }
 
-          if (!existingCode) {
-            console.log('No code found with these credentials');
-            throw new Error('Invalid verification code');
-          }
+      if (!existingCode) {
+        console.log('No code found');
+        throw new Error('Invalid verification code');
+      }
 
-          console.log('Code validation details:', {
-            code: existingCode.code,
-            isUsed: existingCode.used,
-            isExpired: new Date(existingCode.expires_at) <= new Date(now),
-            expiresAt: existingCode.expires_at,
-            currentTime: now
-          });
+      // Now check if the code is valid (not used and not expired)
+      const isExpired = new Date(existingCode.expires_at) <= new Date(now);
+      console.log('Code validation:', {
+        code: existingCode.code,
+        isUsed: existingCode.used,
+        isExpired,
+        expiresAt: existingCode.expires_at,
+        currentTime: now
+      });
 
-          if (existingCode.used) {
-            throw new Error('This code has already been used');
-          }
-          
-          if (new Date(existingCode.expires_at) <= new Date(now)) {
-            throw new Error('This code has expired');
-          }
-        }
-        
-        console.error('Database error:', otpError);
-        throw new Error('Error verifying code');
+      if (existingCode.used) {
+        throw new Error('This code has already been used');
+      }
+
+      if (isExpired) {
+        throw new Error('This code has expired');
       }
 
       // Mark OTP as used
       const { error: updateError } = await supabase
         .from('otp_codes')
         .update({ used: true })
-        .eq('id', otpData.id);
+        .eq('id', existingCode.id);
 
       if (updateError) {
         console.error('Error marking OTP as used:', updateError);
