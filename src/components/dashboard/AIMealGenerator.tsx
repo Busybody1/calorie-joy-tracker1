@@ -6,8 +6,21 @@ import { MealPreferences, GeneratedMeal } from "@/types/meal";
 import { MealPreferencesForm } from "./meal-generator/MealPreferencesForm";
 import { GeneratedMealCard } from "./meal-generator/GeneratedMealCard";
 import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
-export const AIMealGenerator = () => {
+interface AIMealGeneratorProps {
+  date: Date;
+  onAddFood: (food: {
+    name: string;
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    servings: number;
+  }) => void;
+}
+
+export const AIMealGenerator = ({ date, onAddFood }: AIMealGeneratorProps) => {
   const [preferences, setPreferences] = useState<MealPreferences>({
     diet: "",
     maxCalories: 500,
@@ -30,6 +43,18 @@ export const AIMealGenerator = () => {
     }));
   };
 
+  const handleClear = () => {
+    setGeneratedMeal(null);
+    setPreferences({
+      diet: "",
+      maxCalories: 500,
+      foodPreferences: "",
+      foodsToAvoid: "",
+      macroFocus: "Balanced",
+      maxBudget: 10,
+    });
+  };
+
   const handleGenerate = async () => {
     if (!hasCredits) {
       toast({
@@ -49,21 +74,40 @@ export const AIMealGenerator = () => {
 
       if (error) throw error;
 
-      const mockMeal: GeneratedMeal = {
-        name: "Sample Generated Meal",
-        description: data.generatedMeal || "This is a placeholder for the generated meal description.",
-        calories: 450,
-        protein: 30,
-        carbs: 45,
-        fat: 15,
+      // Parse the generated meal response
+      const mealLines = data.generatedMeal.split('\n');
+      let parsedMeal: GeneratedMeal = {
+        name: "",
+        description: "",
+        calories: 0,
+        protein: 0,
+        carbs: 0,
+        fat: 0,
       };
-      
-      setGeneratedMeal(mockMeal);
+
+      mealLines.forEach((line: string) => {
+        if (line.includes("Name of the Dish:")) {
+          parsedMeal.name = line.split(":")[1].trim();
+        } else if (line.includes("Calories per Serving:")) {
+          parsedMeal.calories = parseInt(line.split(":")[1].trim());
+        } else if (line.includes("Protein per Serving:")) {
+          parsedMeal.protein = parseFloat(line.split(":")[1].trim());
+        } else if (line.includes("Carbs per Serving:")) {
+          parsedMeal.carbs = parseFloat(line.split(":")[1].trim());
+        } else if (line.includes("Fats per Serving:")) {
+          parsedMeal.fat = parseFloat(line.split(":")[1].trim());
+        }
+      });
+
+      parsedMeal.description = data.generatedMeal;
+      setGeneratedMeal(parsedMeal);
+
       toast({
         title: "Meal generated",
         description: "Your meal has been generated based on your preferences.",
       });
     } catch (error) {
+      console.error("Generation error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -74,7 +118,16 @@ export const AIMealGenerator = () => {
 
   const handleAddToDaily = () => {
     if (!generatedMeal) return;
-    // TODO: Implement adding to daily intake
+    
+    onAddFood({
+      name: generatedMeal.name,
+      calories: generatedMeal.calories,
+      protein: generatedMeal.protein,
+      carbs: generatedMeal.carbs,
+      fat: generatedMeal.fat,
+      servings: 1,
+    });
+
     toast({
       title: "Added to daily intake",
       description: "The meal has been added to your daily tracking.",
@@ -83,6 +136,19 @@ export const AIMealGenerator = () => {
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-between items-center">
+        <Button
+          variant="outline"
+          onClick={handleClear}
+          className="w-24"
+        >
+          Clear
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          Date: {format(date, "MMM d, yyyy")}
+        </span>
+      </div>
+
       <MealPreferencesForm
         preferences={preferences}
         onPreferenceChange={handleInputChange}

@@ -264,7 +264,7 @@ const Dashboard = () => {
               <CardTitle>AI Meal Generator</CardTitle>
             </CardHeader>
             <CardContent>
-              <AIMealGenerator />
+              <AIMealGenerator date={date} onAddFood={addFood} />
             </CardContent>
           </Card>
 
