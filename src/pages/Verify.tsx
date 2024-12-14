@@ -77,41 +77,42 @@ const Verify = () => {
         .update({ used: true })
         .eq("id", codeCheck.id);
 
-      // Check if user already exists using getUser
-      const { data: existingUser, error: userCheckError } = await supabase.auth
-        .getUser();
+      // Generate a random password for the user
+      const password = Math.random().toString(36).slice(-12);
 
-      console.log("User check result:", { existingUser, userCheckError });
-
-      // Create a Supabase session using passwordless sign-in
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
+      // Try to sign up the user
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
+        password,
         options: {
-          shouldCreateUser: !existingUser, // Only create if user doesn't exist
           data: {
             email_confirmed_at: new Date().toISOString(), // Pre-confirm email
           },
         },
       });
 
-      if (signInError) {
-        console.error("Error signing in:", signInError);
-        
-        // Handle specific error cases
-        if (signInError.message.includes("Database error saving new user")) {
-          toast({
-            variant: "destructive",
-            title: "Account already exists",
-            description: "Please try signing in again.",
+      if (signUpError) {
+        // If user already exists, try to sign in
+        if (signUpError.message.includes("User already registered")) {
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password: password,
           });
-          return;
+
+          if (signInError) {
+            console.error("Error signing in:", signInError);
+            throw signInError;
+          }
+
+          console.log("Sign in successful:", signInData);
+        } else {
+          console.error("Error signing up:", signUpError);
+          throw signUpError;
         }
-        
-        throw signInError;
+      } else {
+        console.log("Sign up successful:", signUpData);
       }
 
-      console.log("Verification successful:", signInData);
-      
       // Redirect to dashboard
       navigate("/dashboard", { replace: true });
 
