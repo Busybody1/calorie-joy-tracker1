@@ -19,7 +19,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // First try to sign up the user with Supabase
+      // First, sign up the user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -32,41 +32,20 @@ const Signup = () => {
 
       if (error) throw error;
 
-      // Only proceed with Beehiiv subscription if signup was successful
       if (data?.user) {
+        // After successful signup, handle Beehiiv subscription
         try {
-          // Check if user is already subscribed to Beehiiv
-          const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-beehiiv-subscription', {
-            body: { email }
-          });
-
-          if (subscriptionError) {
-            console.error('Beehiiv subscription check error:', subscriptionError);
-            // Don't throw here, just log the error and continue
-          }
-
-          // If user is not subscribed, try to subscribe them
-          if (subscriptionData && !subscriptionData.isSubscribed) {
-            const { error: subscribeError } = await supabase.functions.invoke('subscribe-to-beehiiv', {
-              body: { 
-                email,
-                reactivate_existing: false,
-                send_welcome_email: false,
-                utm_source: "calofree",
-                utm_medium: "ads",
-                utm_campaign: "busybits",
-                referring_site: "www.freecaloriecounter.com/"
-              }
-            });
-
-            if (subscribeError) {
-              console.error('Beehiiv subscription error:', subscribeError);
-              // Don't throw here, just log the error and continue
+          await supabase.functions.invoke('subscribe-to-beehiiv', {
+            body: { 
+              email,
+              reactivate_existing: true, // Changed to true to handle existing subscribers
+              send_welcome_email: true,
+              utm_source: "calofree"
             }
-          }
+          });
         } catch (beehiivError) {
-          console.error('Beehiiv operation error:', beehiivError);
-          // Don't throw here, just log the error and continue
+          console.error('Beehiiv subscription error:', beehiivError);
+          // Continue even if Beehiiv subscription fails
         }
 
         navigate("/dashboard");
