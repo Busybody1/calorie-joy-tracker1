@@ -25,13 +25,16 @@ const Verify = () => {
     setIsLoading(true);
 
     try {
+      // Get the current UTC time for comparison
+      const now = new Date().toISOString();
+
       // Get the most recent valid OTP for this email
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
         .eq('used', false)
-        .gt('expires_at', new Date().toISOString())
+        .gt('expires_at', now)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
@@ -39,7 +42,7 @@ const Verify = () => {
       console.log('OTP Verification:', {
         enteredCode: otp,
         dbResponse: otpData,
-        currentTime: new Date().toISOString(),
+        currentTime: now,
         error: otpError
       });
 
@@ -113,6 +116,7 @@ const Verify = () => {
   };
 
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Only allow numbers and limit to 6 digits
     const value = e.target.value.replace(/\D/g, '').slice(0, 6);
     setOtp(value);
   };
