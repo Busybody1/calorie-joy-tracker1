@@ -26,10 +26,13 @@ const Verify = () => {
 
     try {
       const now = new Date().toISOString();
-      console.log('Verification attempt:', {
-        enteredCode: otp,
-        email: email,
-        currentTime: now
+      
+      // Log the exact format of input code
+      console.log('Input code details:', {
+        code: otp,
+        type: typeof otp,
+        length: otp.length,
+        trimmedLength: otp.trim().length
       });
 
       // First, check if there's a valid code
@@ -37,19 +40,21 @@ const Verify = () => {
         .from('otp_codes')
         .select('*')
         .eq('email', email)
-        .eq('code', otp)
+        .eq('code', otp.trim())
         .eq('used', false)
         .gt('expires_at', now)
         .maybeSingle();
 
+      // Log the exact query and response
+      console.log('Database query:', {
+        email: email,
+        code: otp.trim(),
+        currentTime: now
+      });
+
       console.log('Database response:', {
         data: otpData,
-        error: otpError,
-        query: {
-          email: email,
-          code: otp,
-          currentTime: now
-        }
+        error: otpError
       });
 
       if (otpError) {
@@ -62,10 +67,10 @@ const Verify = () => {
           .from('otp_codes')
           .select('*')
           .eq('email', email)
-          .eq('code', otp)
+          .eq('code', otp.trim())
           .maybeSingle();
 
-        console.log('Existing code check:', existingCode);
+        console.log('Existing code details:', existingCode);
 
         if (existingCode) {
           if (existingCode.used) {
