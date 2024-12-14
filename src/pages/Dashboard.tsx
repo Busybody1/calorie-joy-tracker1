@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ArrowLeft, ArrowRight, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { CalendarStrip } from "@/components/CalendarStrip";
 import logo from "../assets/logo.png";
 
 const Dashboard = () => {
-  const [date, setDate] = useState<Date>(new Date());
+  const [date, setDate] = useState<Date>(new Date(2024, 11, 14)); // December 14, 2024
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFoods, setSelectedFoods] = useState<any[]>([]);
 
@@ -55,36 +55,7 @@ const Dashboard = () => {
             </div>
 
             {/* Date Picker */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  const newDate = new Date(date);
-                  newDate.setDate(date.getDate() - 1);
-                  setDate(newDate);
-                }}
-              >
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={(newDate) => newDate && setDate(newDate)}
-                className="rounded-md border"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => {
-                  const newDate = new Date(date);
-                  newDate.setDate(date.getDate() + 1);
-                  setDate(newDate);
-                }}
-              >
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </div>
+            <CalendarStrip date={date} onSelect={setDate} />
 
             {/* Credits */}
             <div className="text-sm font-medium">
