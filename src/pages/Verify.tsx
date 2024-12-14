@@ -33,15 +33,13 @@ const Verify = () => {
         currentTime: now
       });
 
-      // First, check if there's a valid code
+      // First, check if the code exists without additional conditions
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
         .eq('code', otp)
-        .eq('used', false)
-        .gt('expires_at', now)
-        .single();
+        .maybeSingle();
 
       console.log('Database response:', {
         data: otpData,
@@ -49,28 +47,20 @@ const Verify = () => {
       });
 
       if (otpError) {
-        if (otpError.code === 'PGRST116') {
-          // No matching record found
-          const { data: existingCode } = await supabase
-            .from('otp_codes')
-            .select('*')
-            .eq('email', email)
-            .eq('code', otp)
-            .single();
-
-          console.log('Existing code check:', existingCode);
-
-          if (existingCode) {
-            if (existingCode.used) {
-              throw new Error('This code has already been used');
-            } else if (new Date(existingCode.expires_at) <= new Date()) {
-              throw new Error('This code has expired');
-            }
-          } else {
-            throw new Error('Invalid verification code');
-          }
-        }
         throw otpError;
+      }
+
+      if (!otpData) {
+        throw new Error('Invalid verification code');
+      }
+
+      // Now check the code's validity
+      if (otpData.used) {
+        throw new Error('This code has already been used');
+      }
+
+      if (new Date(otpData.expires_at) <= new Date()) {
+        throw new Error('This code has expired');
       }
 
       // Mark OTP as used
