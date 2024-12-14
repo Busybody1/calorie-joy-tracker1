@@ -77,20 +77,40 @@ const Verify = () => {
         .update({ used: true })
         .eq("id", codeCheck.id);
 
+      // Check if user already exists
+      const { data: existingUser, error: userCheckError } = await supabase.auth.admin
+        .getUserByEmail(email);
+
+      console.log("User check result:", { existingUser, userCheckError });
+
       // Create a Supabase session using passwordless sign-in
       const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          shouldCreateUser: true,
-        }
+          shouldCreateUser: !existingUser, // Only create if user doesn't exist
+          data: {
+            email_confirmed_at: new Date().toISOString(), // Pre-confirm email
+          },
+        },
       });
 
       if (signInError) {
         console.error("Error signing in:", signInError);
+        
+        // Handle specific error cases
+        if (signInError.message.includes("Database error saving new user")) {
+          toast({
+            variant: "destructive",
+            title: "Account already exists",
+            description: "Please try signing in again.",
+          });
+          return;
+        }
+        
         throw signInError;
       }
 
-      console.log("Verification successful");
+      console.log("Verification successful:", signInData);
       
       // Redirect to dashboard
       navigate("/dashboard", { replace: true });
