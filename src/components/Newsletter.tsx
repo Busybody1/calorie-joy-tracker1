@@ -5,6 +5,8 @@ import { useToast } from "@/components/ui/use-toast";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -26,7 +28,17 @@ const Newsletter = () => {
           utm_source: "CaloFree Ad",
           utm_medium: "Ad",
           utm_campaign: "BusyBits Subs",
-          referring_site: "www.calofree-counter.com"
+          referring_site: "www.calofree-counter.com",
+          custom_fields: [
+            {
+              name: "First Name",
+              value: firstName
+            },
+            {
+              name: "Last Name", 
+              value: lastName
+            }
+          ]
         })
       });
 
@@ -39,6 +51,8 @@ const Newsletter = () => {
         description: "You've been successfully subscribed to our newsletter.",
       });
       setEmail("");
+      setFirstName("");
+      setLastName("");
     } catch (error) {
       toast({
         title: "Error",
@@ -59,7 +73,21 @@ const Newsletter = () => {
         <p className="text-lg text-gray-600 mb-8">
           Subscribe to our newsletter and receive quick, actionable tips and tricks to help you eat better, feel better, and get more out of every meal.
         </p>
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 max-w-md mx-auto">
+          <Input
+            type="text"
+            placeholder="First Name (Optional)"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            className="rounded-full border-gray-200 focus:border-primary focus:ring-primary"
+          />
+          <Input
+            type="text"
+            placeholder="Last Name (Optional)"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            className="rounded-full border-gray-200 focus:border-primary focus:ring-primary"
+          />
           <Input
             type="email"
             placeholder="Enter your email"
