@@ -26,7 +26,6 @@ const Dashboard = () => {
   const queryClient = useQueryClient();
   const { credits, isLoading: isLoadingCredits } = useCredits();
 
-  // Fetch foods for the selected date
   const { data: selectedFoods = [], isLoading } = useQuery({
     queryKey: ["daily-foods", format(date, "yyyy-MM-dd")],
     queryFn: async () => {
@@ -189,7 +188,7 @@ const Dashboard = () => {
             <div className="text-sm font-medium">
               Credits Left:{" "}
               <span className="text-primary">
-                {isLoadingCredits ? "..." : credits}/30
+                {isLoadingCredits ? "..." : `${credits}/30`}
               </span>
             </div>
           </div>
