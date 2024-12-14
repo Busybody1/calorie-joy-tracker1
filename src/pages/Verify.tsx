@@ -80,33 +80,47 @@ const Verify = () => {
       // Generate a random password for the user
       const password = Math.random().toString(36).slice(-12);
 
-      // First try to sign in with email/password
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      // Try to sign up first
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            email_confirmed_at: new Date().toISOString(),
+          },
+        },
       });
 
-      if (signInError) {
-        // If sign in fails, try to sign up
-        console.log("Sign in failed, attempting to sign up");
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            data: {
-              email_confirmed_at: new Date().toISOString(),
-            },
-          },
-        });
+      if (signUpError) {
+        if (signUpError.message.includes("User already registered")) {
+          // User exists, update their password using admin API
+          const { error: updateError } = await supabase.functions.invoke('update-user-password', {
+            body: { email, password }
+          });
 
-        if (signUpError) {
+          if (updateError) {
+            console.error("Error updating password:", updateError);
+            throw updateError;
+          }
+
+          // Now try to sign in with the new password
+          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (signInError) {
+            console.error("Error signing in:", signInError);
+            throw signInError;
+          }
+
+          console.log("Sign in successful:", signInData);
+        } else {
           console.error("Error signing up:", signUpError);
           throw signUpError;
         }
-
-        console.log("Sign up successful:", signUpData);
       } else {
-        console.log("Sign in successful:", signInData);
+        console.log("Sign up successful:", signUpData);
       }
 
       // Redirect to dashboard
