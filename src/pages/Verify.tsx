@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +10,7 @@ const Verify = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+  const navigate = navigate();
   const { toast } = useToast();
   const email = location.state?.email;
 
@@ -53,8 +53,9 @@ const Verify = () => {
         title: "Success!",
         description: "You have successfully logged in.",
       });
-      navigate("/");
+      navigate("/dashboard");
     } catch (error) {
+      console.error('Verification error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",
