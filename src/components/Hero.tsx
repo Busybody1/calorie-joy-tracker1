@@ -5,16 +5,28 @@ const Hero = () => {
   return (
     <section className="pt-32 pb-16 px-4 animate-fade-in bg-gradient-to-b from-white to-[#e8fbfd]">
       <div className="container mx-auto max-w-7xl">
+        {/* Centered Headline */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">
+            Effortless & 100% Free Calorie Tracking
+          </h1>
+          <Button 
+            size="lg" 
+            className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg rounded-full shadow-lg 
+              hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0.5
+              active:shadow-md transform-gpu"
+          >
+            Start Tracking For Free
+          </Button>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
           <div className="text-left">
-            <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text">
-              Effortless & 100% Free Calorie Tracking
-            </h1>
             <p className="text-xl md:text-2xl text-gray-600 mb-8">
               Access a massive database of 30 million+ foods, track your macros, and never pay a cent.
             </p>
-            <div className="space-y-4 mb-12">
+            <div className="space-y-4">
               {[
                 'No Paid Plans: Use every feature without spending a dime.',
                 '30 Million+ Foods: Quickly find and track practically anything you eat.',
@@ -28,14 +40,6 @@ const Hero = () => {
                 </div>
               ))}
             </div>
-            <Button 
-              size="lg" 
-              className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg rounded-full shadow-lg 
-                hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0.5
-                active:shadow-md transform-gpu"
-            >
-              Start Tracking For Free
-            </Button>
           </div>
 
           {/* Right Floating Container */}
