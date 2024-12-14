@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -11,76 +12,26 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const checkSubscriptionStatus = async (email: string) => {
-    try {
-      const response = await fetch(
-        `https://api.beehiiv.com/v2/publications/pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815/subscriptions/by_email/${email}`,
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
-          },
-        }
-      );
-
-      if (response.status === 404) {
-        // User not subscribed, let's subscribe them
-        await subscribeUser(email);
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Error checking subscription:", error);
-      return false;
-    }
-  };
-
-  const subscribeUser = async (email: string) => {
-    try {
-      await fetch(
-        "https://api.beehiiv.com/v2/publications/pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815/subscriptions",
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${process.env.BEEHIIV_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-            reactivate_existing: false,
-            send_welcome_email: false,
-            utm_source: "CaloFree Ad",
-            utm_medium: "Ad",
-            utm_campaign: "BusyBits Subs",
-            referring_site: "www.calofree-counter.com",
-          }),
-        }
-      );
-    } catch (error) {
-      console.error("Error subscribing user:", error);
-      throw error;
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const subscriptionChecked = await checkSubscriptionStatus(email);
+      const { data, error } = await supabase.functions.invoke('handle-login', {
+        body: { email }
+      });
+
+      if (error) throw error;
+
+      // Navigate to verify page with email
+      navigate("/verify", { state: { email } });
       
-      if (subscriptionChecked) {
-        // Generate OTP and store it (we'll implement this in the next step)
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        // Store OTP in localStorage temporarily (in production, use a proper backend)
-        localStorage.setItem(`otp_${email}`, JSON.stringify({
-          code: otp,
-          expires: Date.now() + 5 * 60 * 1000 // 5 minutes expiration
-        }));
-        
-        // Navigate to OTP verification page
-        navigate("/verify", { state: { email } });
-      }
+      toast({
+        title: "Check your email",
+        description: "We've sent you a verification code.",
+      });
     } catch (error) {
+      console.error('Error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

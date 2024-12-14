@@ -1,1 +1,2 @@
-project_id = "ejbkbhocbsagahjeqcba"
+[functions.handle-login]
+verify_jwt = false

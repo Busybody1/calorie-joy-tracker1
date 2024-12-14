@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { supabase } from "@/integrations/supabase/client";
 
 const Verify = () => {
   const [otp, setOtp] = useState("");
@@ -18,41 +19,41 @@ const Verify = () => {
     return null;
   }
 
-  const verifyOTP = (inputOTP: string) => {
-    const storedOTP = localStorage.getItem(`otp_${email}`);
-    if (!storedOTP) return false;
-
-    const { code, expires } = JSON.parse(storedOTP);
-    if (Date.now() > expires) {
-      localStorage.removeItem(`otp_${email}`);
-      return false;
-    }
-
-    return code === inputOTP;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      if (verifyOTP(otp)) {
-        // Clear OTP from storage
-        localStorage.removeItem(`otp_${email}`);
-        
-        // Success! Navigate to dashboard or home
-        toast({
-          title: "Success!",
-          description: "You have successfully logged in.",
-        });
-        navigate("/");
-      } else {
+      const { data, error } = await supabase
+        .from('otp_codes')
+        .select()
+        .eq('email', email)
+        .eq('code', otp)
+        .eq('used', false)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+      if (error || !data) {
         toast({
           title: "Invalid Code",
           description: "Please check the code and try again.",
           variant: "destructive",
         });
+        return;
       }
+
+      // Mark OTP as used
+      await supabase
+        .from('otp_codes')
+        .update({ used: true })
+        .eq('id', data.id);
+
+      // Success! Navigate to dashboard
+      toast({
+        title: "Success!",
+        description: "You have successfully logged in.",
+      });
+      navigate("/");
     } catch (error) {
       toast({
         title: "Error",
