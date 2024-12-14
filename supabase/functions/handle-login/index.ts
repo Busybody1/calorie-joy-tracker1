@@ -53,11 +53,15 @@ Deno.serve(async (req) => {
       console.log('Subscription creation response:', subscribeResponse.status);
     }
 
-    // Generate OTP
+    // Generate OTP and set expiration
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
-    console.log('Generated OTP:', otp);
-    console.log('Expires at:', expiresAt.toISOString());
+    
+    console.log('Generated OTP details:', {
+      otp,
+      expiresAt: expiresAt.toISOString(),
+      currentTime: new Date().toISOString()
+    });
 
     // Initialize Supabase client
     console.log('Initializing Supabase client...');
@@ -85,10 +89,15 @@ Deno.serve(async (req) => {
 
     if (insertError) {
       console.error('Error storing OTP:', insertError);
-      throw insertError;
+      throw new Error('Failed to store OTP code');
     }
 
-    console.log('OTP stored successfully:', insertData);
+    console.log('OTP stored successfully:', {
+      id: insertData.id,
+      email: insertData.email,
+      expiresAt: insertData.expires_at,
+      used: insertData.used
+    });
 
     // Send email with OTP via Mailgun
     const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
