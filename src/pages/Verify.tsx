@@ -33,7 +33,7 @@ const Verify = () => {
         currentTime: now
       });
 
-      // First, check if the code exists without any conditions
+      // First, just check if the code exists for this email
       const { data: rawCode, error: rawError } = await supabase
         .from('otp_codes')
         .select('*')

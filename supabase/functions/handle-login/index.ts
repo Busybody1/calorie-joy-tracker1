@@ -6,7 +6,6 @@ interface LoginRequest {
 }
 
 Deno.serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
@@ -28,7 +27,6 @@ Deno.serve(async (req) => {
     );
     console.log('Beehiiv response status:', beehiivResponse.status);
 
-    // If user is not subscribed (404), subscribe them
     if (beehiivResponse.status === 404) {
       console.log('User not subscribed, creating subscription...');
       const subscribeResponse = await fetch(
@@ -96,7 +94,8 @@ Deno.serve(async (req) => {
       id: insertData.id,
       email: insertData.email,
       expiresAt: insertData.expires_at,
-      used: insertData.used
+      used: insertData.used,
+      code: insertData.code // Log the code for debugging
     });
 
     // Send email with OTP via Mailgun
