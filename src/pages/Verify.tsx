@@ -27,13 +27,23 @@ const Verify = () => {
     try {
       const now = new Date().toISOString();
       
-      console.log('Verification attempt:', {
-        email: email,
+      // Log input validation
+      console.log('Input validation:', {
+        email,
         inputCode: otp,
+        codeLength: otp.length,
+        codeType: typeof otp,
+        trimmedLength: otp.trim().length,
         currentTime: now
       });
 
       // First, check if the code exists without additional conditions
+      console.log('Executing database query with parameters:', {
+        email,
+        code: otp,
+        queryTime: new Date().toISOString()
+      });
+
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
@@ -41,10 +51,35 @@ const Verify = () => {
         .eq('code', otp)
         .maybeSingle();
 
-      console.log('Database response:', {
+      console.log('Full database response:', {
         data: otpData,
-        error: otpError?.message
+        error: otpError?.message,
+        errorDetails: otpError
       });
+
+      // If we got data, log its details
+      if (otpData) {
+        console.log('OTP record found:', {
+          storedCode: otpData.code,
+          storedEmail: otpData.email,
+          isUsed: otpData.used,
+          expiresAt: otpData.expires_at,
+          isExpired: new Date(otpData.expires_at) <= new Date(),
+          currentTime: new Date().toISOString()
+        });
+      } else {
+        console.log('No OTP record found with these parameters');
+        
+        // Additional check to see if there are any codes for this email
+        const { data: allCodes } = await supabase
+          .from('otp_codes')
+          .select('*')
+          .eq('email', email)
+          .order('created_at', { ascending: false })
+          .limit(5);
+        
+        console.log('Recent codes for this email:', allCodes);
+      }
 
       if (otpError) {
         throw otpError;
@@ -70,8 +105,11 @@ const Verify = () => {
         .eq('id', otpData.id);
 
       if (updateError) {
+        console.error('Error marking OTP as used:', updateError);
         throw updateError;
       }
+
+      console.log('Verification successful, OTP marked as used');
 
       toast({
         title: "Success!",
