@@ -37,14 +37,19 @@ const Verify = () => {
         .from('otp_codes')
         .select('*')
         .eq('email', email)
-        .eq('code', otp.toString()) // Convert input to string to match database type
+        .eq('code', otp)
         .eq('used', false)
         .gt('expires_at', now)
         .maybeSingle();
 
       console.log('Database response:', {
         data: otpData,
-        error: otpError
+        error: otpError,
+        query: {
+          email: email,
+          code: otp,
+          currentTime: now
+        }
       });
 
       if (otpError) {
@@ -57,7 +62,7 @@ const Verify = () => {
           .from('otp_codes')
           .select('*')
           .eq('email', email)
-          .eq('code', otp.toString()) // Convert input to string to match database type
+          .eq('code', otp)
           .maybeSingle();
 
         console.log('Existing code check:', existingCode);
