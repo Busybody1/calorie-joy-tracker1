@@ -80,37 +80,33 @@ const Verify = () => {
       // Generate a random password for the user
       const password = Math.random().toString(36).slice(-12);
 
-      // Try to sign up the user
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+      // First try to sign in with email/password
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          data: {
-            email_confirmed_at: new Date().toISOString(), // Pre-confirm email
-          },
-        },
       });
 
-      if (signUpError) {
-        // If user already exists, try to sign in
-        if (signUpError.message.includes("User already registered")) {
-          const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password: password,
-          });
+      if (signInError) {
+        // If sign in fails, try to sign up
+        console.log("Sign in failed, attempting to sign up");
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              email_confirmed_at: new Date().toISOString(),
+            },
+          },
+        });
 
-          if (signInError) {
-            console.error("Error signing in:", signInError);
-            throw signInError;
-          }
-
-          console.log("Sign in successful:", signInData);
-        } else {
+        if (signUpError) {
           console.error("Error signing up:", signUpError);
           throw signUpError;
         }
-      } else {
+
         console.log("Sign up successful:", signUpData);
+      } else {
+        console.log("Sign in successful:", signInData);
       }
 
       // Redirect to dashboard
