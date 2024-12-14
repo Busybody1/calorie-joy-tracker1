@@ -54,12 +54,16 @@ const Verify = () => {
 
       if (!otpData) {
         // Check if the code exists but is expired
-        const { data: expiredCode } = await supabase
+        const { data: expiredCode, error: expiredError } = await supabase
           .from('otp_codes')
           .select('expires_at')
           .eq('email', email)
           .eq('code', otp.trim())
-          .single();
+          .maybeSingle();
+
+        if (expiredError) {
+          console.error('Error checking expired code:', expiredError);
+        }
 
         if (expiredCode) {
           toast({
