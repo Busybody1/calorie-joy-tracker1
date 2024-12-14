@@ -38,10 +38,10 @@ Deno.serve(async (req) => {
             email,
             reactivate_existing: false,
             send_welcome_email: false,
-            utm_source: 'CaloFree Ad',
-            utm_medium: 'Ad',
-            utm_campaign: 'BusyBits Subs',
-            referring_site: 'www.calofree-counter.com',
+            utm_source: "calofree",
+            utm_medium: "ads",
+            utm_campaign: "busybits",
+            referring_site: "www.freecaloriecounter.com/"
           }),
         }
       );
@@ -68,11 +68,10 @@ Deno.serve(async (req) => {
 
     // Send email with OTP via Mailgun
     const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
-    const MAILGUN_DOMAIN = 'emailsearch.uk'; // Updated domain here
+    const MAILGUN_DOMAIN = 'emailsearch.uk';
 
     if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
       console.error('Mailgun configuration is missing');
-      // For now, just log the OTP and return success
       console.log(`OTP for ${email}: ${otp}`);
       return new Response(
         JSON.stringify({ message: 'OTP generated (check logs)' }),
@@ -106,7 +105,6 @@ Deno.serve(async (req) => {
       }
     } catch (error) {
       console.error('Error sending email:', error);
-      // Still return success but log the OTP
       console.log(`OTP for ${email}: ${otp}`);
       return new Response(
         JSON.stringify({ message: 'OTP generated (check logs)' }),
