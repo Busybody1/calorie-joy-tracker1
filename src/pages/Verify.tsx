@@ -46,7 +46,7 @@ const Verify = () => {
         .eq("used", false)
         .single();
 
-      console.log("Raw code check:", { code: codeCheck, error: codeError });
+      console.log("OTP verification result:", { codeCheck, codeError });
 
       if (codeError || !codeCheck) {
         toast({
@@ -69,38 +69,20 @@ const Verify = () => {
         return;
       }
 
-      console.log("Code is valid, marking as used");
-
       // Mark the OTP as used
       await supabase
         .from("otp_codes")
         .update({ used: true })
         .eq("id", codeCheck.id);
 
-      // Generate a random password for the user
-      const password = Math.random().toString(36).slice(-12);
-
-      // Try to sign in first in case user exists
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+      // Create a magic link session
+      const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
-        password,
       });
 
       if (signInError) {
-        // User doesn't exist, try to sign up
-        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-          email,
-          password,
-        });
-
-        if (signUpError) {
-          console.error("Error signing up:", signUpError);
-          throw signUpError;
-        }
-
-        console.log("Sign up successful:", signUpData);
-      } else {
-        console.log("Sign in successful:", signInData);
+        console.error("Error signing in:", signInError);
+        throw signInError;
       }
 
       // Redirect to dashboard
