@@ -31,7 +31,9 @@ const Newsletter = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to subscribe');
+        const errorData = await response.json();
+        console.error('API Error:', errorData);
+        throw new Error(errorData.message || 'Failed to subscribe');
       }
 
       toast({
