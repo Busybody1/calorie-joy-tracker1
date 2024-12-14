@@ -10,6 +10,7 @@ import logo from "../assets/logo.png";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCredits } from "@/hooks/useCredits";
+import { useNavigate } from "react-router-dom";
 
 interface Food {
   name: string;
@@ -25,6 +26,28 @@ const Dashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { credits, isLoading: isLoadingCredits } = useCredits();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login');
+      }
+    };
+    checkAuth();
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT' || !session) {
+        navigate('/login');
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [navigate]);
 
   const { data: selectedFoods = [], isLoading } = useQuery({
     queryKey: ["daily-foods", format(date, "yyyy-MM-dd")],

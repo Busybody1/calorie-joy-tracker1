@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { useCredits } from "@/hooks/useCredits";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 const USDA_API_KEY = "ldByUjvqs9QYqAXTMQeHB5omhMFNc1Y7VBgfDW77";
 
@@ -41,6 +41,23 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        navigate('/login');
+      } else {
+        // Set session duration to 30 days
+        await supabase.auth.updateUser({
+          data: { session_duration: 30 * 24 * 60 * 60 } // 30 days in seconds
+        });
+      }
+    };
+    checkAuth();
+  }, [navigate]);
 
   const getNutrientValue = (nutrients: Nutrient[], targetId: number) => {
     const nutrient = nutrients.find((n) => n.nutrientId === targetId);
@@ -98,14 +115,15 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
 
   const handleAddFood = async (food: Food) => {
     try {
-      const { data: session } = await supabase.auth.getSession();
+      const { data: { session } } = await supabase.auth.getSession();
       
-      if (!session?.session?.user) {
+      if (!session?.user) {
         toast({
           variant: "destructive",
           title: "Authentication required",
           description: "Please log in to add foods to your daily intake.",
         });
+        navigate('/login');
         return;
       }
 
