@@ -16,7 +16,7 @@ interface Food {
 }
 
 const Dashboard = () => {
-  const [date, setDate] = useState<Date>(new Date(2024, 11, 14)); // December 14, 2024
+  const [date, setDate] = useState<Date>(new Date(2024, 11, 14));
   const [selectedFoods, setSelectedFoods] = useState<Food[]>([]);
 
   const addFood = (food: Food) => {
@@ -26,6 +26,11 @@ const Dashboard = () => {
   const updateServings = (index: number, newServings: number) => {
     const updatedFoods = [...selectedFoods];
     updatedFoods[index].servings = Math.max(0.25, newServings);
+    setSelectedFoods(updatedFoods);
+  };
+
+  const removeFood = (index: number) => {
+    const updatedFoods = selectedFoods.filter((_, i) => i !== index);
     setSelectedFoods(updatedFoods);
   };
 
@@ -98,6 +103,7 @@ const Dashboard = () => {
                 selectedFoods={selectedFoods}
                 updateServings={updateServings}
                 totals={totals}
+                onRemoveFood={removeFood}
               />
             </CardContent>
           </Card>
