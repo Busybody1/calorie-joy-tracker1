@@ -25,24 +25,26 @@ const Verify = () => {
     setIsLoading(true);
 
     try {
-      // Get the current UTC time for comparison
       const now = new Date().toISOString();
+      console.log('Verification attempt:', {
+        enteredCode: otp,
+        email: email,
+        currentTime: now
+      });
 
-      // Get the most recent valid OTP for this email
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
+        .eq('code', otp.trim())
         .eq('used', false)
         .gt('expires_at', now)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      console.log('OTP Verification:', {
-        enteredCode: otp,
-        dbResponse: otpData,
-        currentTime: now,
+      console.log('Database response:', {
+        data: otpData,
         error: otpError
       });
 
@@ -51,15 +53,13 @@ const Verify = () => {
       }
 
       if (!otpData) {
-        // Check if there's an expired code that matches
+        // Check if the code exists but is expired
         const { data: expiredCode } = await supabase
           .from('otp_codes')
           .select('expires_at')
           .eq('email', email)
           .eq('code', otp.trim())
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+          .single();
 
         if (expiredCode) {
           toast({
@@ -77,16 +77,6 @@ const Verify = () => {
         return;
       }
 
-      // Compare the entered OTP with the one from database
-      if (otpData.code !== otp.trim()) {
-        toast({
-          title: "Invalid Code",
-          description: "The code you entered is incorrect. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
       // Mark OTP as used
       const { error: updateError } = await supabase
         .from('otp_codes')
@@ -97,7 +87,6 @@ const Verify = () => {
         throw updateError;
       }
 
-      // Success! Navigate to dashboard
       toast({
         title: "Success!",
         description: "You have successfully logged in.",
