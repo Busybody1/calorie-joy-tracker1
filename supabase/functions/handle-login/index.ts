@@ -12,9 +12,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log('Starting login process...');
     const { email } = await req.json() as LoginRequest;
+    console.log('Email received:', email);
     
     // Check Beehiiv subscription status
+    console.log('Checking Beehiiv subscription...');
     const beehiivResponse = await fetch(
       `https://api.beehiiv.com/v2/publications/pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815/subscriptions/by_email/${email}`,
       {
@@ -23,10 +26,12 @@ Deno.serve(async (req) => {
         },
       }
     );
+    console.log('Beehiiv response status:', beehiivResponse.status);
 
     // If user is not subscribed (404), subscribe them
     if (beehiivResponse.status === 404) {
-      await fetch(
+      console.log('User not subscribed, creating subscription...');
+      const subscribeResponse = await fetch(
         'https://api.beehiiv.com/v2/publications/pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815/subscriptions',
         {
           method: 'POST',
@@ -45,26 +50,44 @@ Deno.serve(async (req) => {
           }),
         }
       );
+      console.log('Subscription creation response:', subscribeResponse.status);
     }
 
     // Generate OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+    console.log('Generated OTP:', otp);
+    console.log('Expires at:', expiresAt.toISOString());
 
     // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
+    console.log('Initializing Supabase client...');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase configuration');
+    }
+
+    const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
     // Store OTP in database
-    await supabaseClient
+    console.log('Storing OTP in database...');
+    const { data: insertData, error: insertError } = await supabaseClient
       .from('otp_codes')
       .insert({
         email,
         code: otp,
         expires_at: expiresAt.toISOString(),
-      });
+      })
+      .select()
+      .single();
+
+    if (insertError) {
+      console.error('Error storing OTP:', insertError);
+      throw insertError;
+    }
+
+    console.log('OTP stored successfully:', insertData);
 
     // Send email with OTP via Mailgun
     const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
@@ -83,6 +106,7 @@ Deno.serve(async (req) => {
     }
 
     try {
+      console.log('Sending email via Mailgun...');
       const mailgunResponse = await fetch(
         `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`,
         {
@@ -101,8 +125,11 @@ Deno.serve(async (req) => {
       );
 
       if (!mailgunResponse.ok) {
+        console.error('Mailgun error:', await mailgunResponse.text());
         throw new Error('Failed to send email');
       }
+      
+      console.log('Email sent successfully');
     } catch (error) {
       console.error('Error sending email:', error);
       console.log(`OTP for ${email}: ${otp}`);
@@ -115,6 +142,7 @@ Deno.serve(async (req) => {
       );
     }
 
+    console.log('Login process completed successfully');
     return new Response(
       JSON.stringify({ message: 'OTP sent successfully' }),
       {
@@ -123,7 +151,7 @@ Deno.serve(async (req) => {
       },
     );
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error in login process:', error);
     return new Response(
       JSON.stringify({ error: 'Internal server error', details: error.message }),
       {
