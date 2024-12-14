@@ -18,8 +18,20 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      // Basic validation
+      if (!email || !password) {
+        throw new Error("Please fill in all fields");
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error("Please enter a valid email address");
+      }
+
+      // Attempt login with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
@@ -41,7 +53,9 @@ const Login = () => {
       console.error('Login error:', error);
       toast({
         title: "Error",
-        description: error.message || "Invalid email or password.",
+        description: error.message === "Invalid login credentials" 
+          ? "Invalid email or password. Please try again."
+          : error.message || "An error occurred during login.",
         variant: "destructive",
       });
     } finally {
