@@ -13,27 +13,19 @@ const Newsletter = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://api.beehiiv.com/v2/publications/pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815/subscriptions", {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/subscribe-newsletter`, {
         method: 'POST',
         headers: {
-          'Authorization': 'Bearer VzAM0rJjyKSnCzDHgSZZqtHchqB9cwT1Ip7U2x5WVeSfMG8lwPVNGK38nH7ptHp8',
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
         },
-        body: JSON.stringify({
-          email: email,
-          reactivate_existing: false,
-          send_welcome_email: false,
-          utm_source: "calofree",
-          utm_medium: "ads",
-          utm_campaign: "busybits",
-          referring_site: "www.freecaloriecounter.com/"
-        })
+        body: JSON.stringify({ email }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error:', errorData);
-        throw new Error(errorData.message || 'Failed to subscribe');
+        throw new Error(data.error || 'Failed to subscribe');
       }
 
       toast({
