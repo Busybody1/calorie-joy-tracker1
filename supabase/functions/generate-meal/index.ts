@@ -22,7 +22,19 @@ serve(async (req) => {
       throw new Error('GROQ_API_KEY is not set');
     }
 
-    const prompt = `
+    const messages = [
+      {
+        role: "system",
+        content: `# Construct the prompt according to the instructions:
+# Insert the user-provided dietary preference, max calorie limit, food preferences, foods to avoid, macro focus, and budget into the prompt.
+# Follow all formatting and content rules:
+# - No markup other than dashes for bullet points
+# - Must adhere to dietary preferences, max calories, etc.
+# - Carbs: 4 kcal/g, Protein: 4 kcal/g, Fat: 9 kcal/g
+# - Total calories must add up exactly
+# - Use no ranges, only exact values
+# - Include instructions and the final recipe format
+
 Dietary Preference: ${preferences.diet}
 Max Calories Limit: ${preferences.maxCalories} kcal
 Food Preferences: ${preferences.foodPreferences}
@@ -54,9 +66,20 @@ Fats per Serving: [Fats in grams]
 Ingredients: [List each ingredient with quantity in grams and also specify counts, e.g., 2 peppers (20g)],
 
 Instructions: [Step-by-step instructions to prepare the meal]
-`;
 
-    console.log('Sending request to Groq API...');
+Constraints:
+- Must adhere to ${preferences.diet} if specified.
+- Must not exceed ${preferences.maxCalories} per serving.
+- Exclude foods in the list: ${preferences.foodsToAvoid}
+- Include ${preferences.foodPreferences} if possible.
+- Focus on ${preferences.macroFocus} as the key macro if applicable.
+- Stay under $${preferences.maxBudget}.
+- Sum of macros must match total calories exactly, no approximations.`
+      }
+    ];
+
+    console.log('Sending request to Groq API with messages:', messages);
+
     const response = await fetch('https://api.groq.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -65,7 +88,7 @@ Instructions: [Step-by-step instructions to prepare the meal]
       },
       body: JSON.stringify({
         model: "llama-3.1-8b-instant",
-        messages: [{ role: "user", content: prompt }],
+        messages,
         max_tokens: 7999,
         temperature: 1.2,
       }),
