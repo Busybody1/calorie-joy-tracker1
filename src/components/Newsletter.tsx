@@ -1,7 +1,55 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
 
 const Newsletter = () => {
+  const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch("https://api.beehiiv.com/v2/publications/pub_00000000-0000-0000-0000-000000000000/subscriptions", {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.BEEHIIV_API_KEY || ''}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          reactivate_existing: false,
+          send_welcome_email: false,
+          utm_source: "CaloFree Ad",
+          utm_medium: "Ad",
+          utm_campaign: "BusyBits Subs",
+          referring_site: "www.calofree-counter.com"
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to subscribe');
+      }
+
+      toast({
+        title: "Success!",
+        description: "You've been successfully subscribed to our newsletter.",
+      });
+      setEmail("");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to subscribe. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <section className="py-16 bg-gradient-to-b from-[#e8fbfd] to-white">
       <div className="container mx-auto px-4 max-w-2xl text-center">
@@ -11,14 +59,21 @@ const Newsletter = () => {
         <p className="text-lg text-gray-600 mb-8">
           Subscribe to our newsletter and receive quick, actionable tips and tricks to help you eat better, feel better, and get more out of every meal.
         </p>
-        <form className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
           <Input
             type="email"
             placeholder="Enter your email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
             className="flex-1 rounded-full border-gray-200 focus:border-primary focus:ring-primary"
           />
-          <Button className="bg-primary hover:bg-primary/90 text-white whitespace-nowrap rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5">
-            Join Now (It's Free)
+          <Button 
+            type="submit"
+            disabled={isLoading}
+            className="bg-primary hover:bg-primary/90 text-white whitespace-nowrap rounded-full shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5"
+          >
+            {isLoading ? "Joining..." : "Join Now (It's Free)"}
           </Button>
         </form>
       </div>
