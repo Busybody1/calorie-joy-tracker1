@@ -34,7 +34,7 @@ const Verify = () => {
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       console.log('OTP Verification:', {
         enteredCode: otp,
@@ -42,7 +42,11 @@ const Verify = () => {
         error: otpError
       });
 
-      if (otpError || !otpData) {
+      if (otpError) {
+        throw otpError;
+      }
+
+      if (!otpData) {
         toast({
           title: "Code Expired",
           description: "Please request a new verification code.",
