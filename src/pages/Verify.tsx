@@ -25,7 +25,13 @@ const Verify = () => {
     setIsLoading(true);
 
     try {
-      // Query for the most recent, unused, and non-expired OTP
+      console.log('Verifying OTP:', { 
+        enteredOtp: otp,
+        email: email,
+        currentTime: new Date().toISOString()
+      });
+
+      // First, get the most recent valid OTP for this email
       const { data, error } = await supabase
         .from('otp_codes')
         .select()
@@ -36,14 +42,31 @@ const Verify = () => {
         .limit(1)
         .maybeSingle();
 
+      console.log('Database response:', { data, error });
+
       if (error) {
         throw error;
       }
 
-      if (!data || data.code !== otp) {
+      if (!data) {
+        toast({
+          title: "Code Expired",
+          description: "The verification code has expired. Please request a new one.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Compare the entered OTP with the one from database
+      if (data.code !== otp.trim()) {
+        console.log('OTP mismatch:', {
+          entered: otp.trim(),
+          expected: data.code,
+          match: data.code === otp.trim()
+        });
         toast({
           title: "Invalid Code",
-          description: "The code is invalid or has expired. Please check and try again.",
+          description: "The code is invalid. Please check and try again.",
           variant: "destructive",
         });
         return;
