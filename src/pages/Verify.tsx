@@ -45,6 +45,7 @@ const Verify = () => {
       
       if (recentError) {
         console.error('Error fetching recent codes:', recentError);
+        throw new Error('Error checking recent codes');
       }
 
       // Now try to find the specific code
@@ -54,7 +55,8 @@ const Verify = () => {
         .eq('email', email)
         .eq('code', otp)
         .eq('used', false)
-        .gt('expires_at', now);
+        .gt('expires_at', now)
+        .order('created_at', { ascending: false });
 
       console.log('Verification query result:', {
         data: otpData,
@@ -64,7 +66,7 @@ const Verify = () => {
 
       if (otpError) {
         console.error('Database error:', otpError);
-        throw otpError;
+        throw new Error('Database error occurred');
       }
 
       // Check if we found a valid code
@@ -78,22 +80,23 @@ const Verify = () => {
 
         console.log('Existing codes found:', existingCodes);
 
-        const existingCode = existingCodes?.[0];
+        if (!existingCodes || existingCodes.length === 0) {
+          throw new Error('Invalid verification code');
+        }
 
-        if (existingCode) {
-          console.log('Code found but invalid because:', {
-            isUsed: existingCode.used,
-            isExpired: new Date(existingCode.expires_at) <= new Date(),
-            expiresAt: existingCode.expires_at,
-            currentTime: now
-          });
+        const existingCode = existingCodes[0];
+        console.log('Code validation details:', {
+          isUsed: existingCode.used,
+          isExpired: new Date(existingCode.expires_at) <= new Date(now),
+          expiresAt: existingCode.expires_at,
+          currentTime: now
+        });
 
-          if (existingCode.used) {
-            throw new Error('This code has already been used');
-          }
-          if (new Date(existingCode.expires_at) <= new Date()) {
-            throw new Error('This code has expired');
-          }
+        if (existingCode.used) {
+          throw new Error('This code has already been used');
+        }
+        if (new Date(existingCode.expires_at) <= new Date(now)) {
+          throw new Error('This code has expired');
         }
         
         throw new Error('Invalid verification code');
@@ -107,7 +110,7 @@ const Verify = () => {
 
       if (updateError) {
         console.error('Error marking OTP as used:', updateError);
-        throw updateError;
+        throw new Error('Error completing verification');
       }
 
       console.log('Verification successful, OTP marked as used');
