@@ -6,7 +6,7 @@ export const useCredits = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: credits, isLoading } = useQuery({
+  const { data: credits = 30, isLoading } = useQuery({
     queryKey: ["user-credits"],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -18,8 +18,12 @@ export const useCredits = () => {
         .eq("email", user.email)
         .single();
 
-      if (error) throw error;
-      return data.credits_remaining;
+      if (error) {
+        console.error("Error fetching credits:", error);
+        throw error;
+      }
+
+      return data?.credits_remaining ?? 30;
     },
   });
 
@@ -30,12 +34,16 @@ export const useCredits = () => {
 
       const { data, error } = await supabase
         .from("user_credits")
-        .update({ credits_remaining: (credits || 0) - 1 })
+        .update({ credits_remaining: (credits - 1) })
         .eq("email", user.email)
         .select("credits_remaining")
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error updating credits:", error);
+        throw error;
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -54,6 +62,6 @@ export const useCredits = () => {
     credits,
     isLoading,
     useCredit,
-    hasCredits: (credits || 0) > 0,
+    hasCredits: credits > 0,
   };
 };
