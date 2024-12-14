@@ -36,7 +36,7 @@ const Verify = () => {
       // First, get all recent codes for this email for debugging
       const { data: recentCodes, error: recentError } = await supabase
         .from('otp_codes')
-        .select('*')
+        .select()
         .eq('email', email)
         .order('created_at', { ascending: false })
         .limit(5);
@@ -75,6 +75,8 @@ const Verify = () => {
           .select()
           .eq('email', email)
           .eq('code', otp);
+
+        console.log('Existing codes found:', existingCodes);
 
         const existingCode = existingCodes?.[0];
 

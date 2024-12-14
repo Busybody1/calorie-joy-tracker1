@@ -70,7 +70,7 @@ Deno.serve(async (req) => {
 
     const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
-    // Store OTP in database
+    // Store OTP in database - Using upsert to handle potential duplicates
     console.log('Storing OTP in database...');
     const { data: insertData, error: insertError } = await supabaseClient
       .from('otp_codes')
@@ -78,6 +78,7 @@ Deno.serve(async (req) => {
         email,
         code: otp,
         expires_at: expiresAt.toISOString(),
+        used: false
       })
       .select()
       .single();
