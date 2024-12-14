@@ -1,13 +1,19 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 
 const Verify = () => {
-  const [otp, setOtp] = useState("");
+  const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -16,7 +22,7 @@ const Verify = () => {
 
   useEffect(() => {
     if (!email) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
   }, [email, navigate]);
 
@@ -25,74 +31,87 @@ const Verify = () => {
     setIsLoading(true);
 
     try {
-      const now = new Date().toISOString();
-      
-      console.log('Starting verification process:', {
+      console.log("Starting verification process:", {
         email,
-        code: otp,
-        currentTime: now
+        code,
+        currentTime: new Date().toISOString(),
       });
 
-      // First, check if the code exists and is valid
-      const { data: rawCode, error: rawError } = await supabase
-        .from('otp_codes')
-        .select('*')
-        .eq('email', email)
-        .eq('code', otp)
-        .eq('used', false)
-        .gt('expires_at', now)
-        .maybeSingle();
+      // First verify the OTP code
+      const { data: codeCheck, error: codeError } = await supabase
+        .from("otp_codes")
+        .select("*")
+        .eq("email", email)
+        .eq("code", code)
+        .eq("used", false)
+        .single();
 
-      console.log('Raw code check:', {
-        code: rawCode,
-        error: rawError
-      });
+      console.log("Raw code check:", { code: codeCheck, error: codeError });
 
-      if (rawError) {
-        console.error('Database error:', rawError);
-        throw new Error('Error checking verification code');
+      if (codeError || !codeCheck) {
+        toast({
+          variant: "destructive",
+          title: "Invalid code",
+          description: "Please check your code and try again.",
+        });
+        return;
       }
 
-      if (!rawCode) {
-        console.log('No valid code found');
-        throw new Error('Invalid or expired verification code');
+      const now = new Date();
+      const expiresAt = new Date(codeCheck.expires_at);
+
+      if (now > expiresAt) {
+        toast({
+          variant: "destructive",
+          title: "Code expired",
+          description: "Please request a new code.",
+        });
+        return;
       }
 
-      // If we get here, the code is valid. Mark it as used.
-      console.log('Code is valid, marking as used');
-      const { error: updateError } = await supabase
-        .from('otp_codes')
+      console.log("Code is valid, marking as used");
+
+      // Mark the OTP as used
+      await supabase
+        .from("otp_codes")
         .update({ used: true })
-        .eq('id', rawCode.id);
+        .eq("id", codeCheck.id);
 
-      if (updateError) {
-        console.error('Error marking code as used:', updateError);
-        throw new Error('Error completing verification');
+      // Create a Supabase session using passwordless sign-in
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: true,
+        }
+      });
+
+      if (signInError) {
+        console.error("Error signing in:", signInError);
+        throw signInError;
       }
 
-      console.log('Verification successful');
+      console.log("Verification successful");
+      
+      // Redirect to dashboard
+      navigate("/dashboard", { replace: true });
+
       toast({
-        title: "Success!",
-        description: "You have successfully logged in.",
+        title: "Verification successful",
+        description: "You are now logged in.",
       });
-      navigate("/dashboard");
     } catch (error) {
-      console.error('Verification error:', error);
+      console.error("Verification error:", error);
       toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
+        title: "Error",
+        description: "Something went wrong. Please try again.",
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Only allow numbers and limit to 6 digits
-    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-    setOtp(value);
-  };
+  if (!email) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-[#e8fbfd] flex items-center justify-center p-4">
@@ -102,29 +121,28 @@ const Verify = () => {
             Enter Verification Code
           </CardTitle>
           <CardDescription className="text-center">
-            We've sent a code to {email}
+            We sent a code to {email}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="flex justify-center mb-8">
+            <div className="space-y-2">
               <Input
                 type="text"
-                inputMode="numeric"
-                pattern="[0-9]*"
-                value={otp}
-                onChange={handleOtpChange}
-                placeholder="Enter 6-digit code"
-                className="text-center text-2xl tracking-widest"
+                placeholder="Enter verification code"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                required
+                className="w-full text-center text-2xl tracking-widest"
                 maxLength={6}
               />
             </div>
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90"
-              disabled={isLoading || otp.length !== 6}
+              disabled={isLoading}
             >
-              {isLoading ? "Verifying..." : "Verify Code"}
+              {isLoading ? "Verifying..." : "Verify"}
             </Button>
             <Button
               type="button"
