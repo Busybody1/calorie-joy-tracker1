@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 
 const Verify = () => {
@@ -87,6 +87,11 @@ const Verify = () => {
     }
   };
 
+  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+    setOtp(value);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-[#e8fbfd] flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -101,17 +106,13 @@ const Verify = () => {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex justify-center mb-8">
-              <InputOTP
-                maxLength={6}
+              <Input
+                type="text"
                 value={otp}
-                onChange={setOtp}
-                render={({ slots }) => (
-                  <InputOTPGroup className="gap-2">
-                    {slots.map((slot, index) => (
-                      <InputOTPSlot key={index} {...slot} index={index} />
-                    ))}
-                  </InputOTPGroup>
-                )}
+                onChange={handleOtpChange}
+                placeholder="Enter 6-digit code"
+                className="text-center text-2xl tracking-widest"
+                maxLength={6}
               />
             </div>
             <Button
