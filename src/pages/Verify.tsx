@@ -37,7 +37,7 @@ const Verify = () => {
         .from('otp_codes')
         .select('*')
         .eq('email', email)
-        .eq('code', otp)
+        .eq('code', otp.toString()) // Convert input to string to match database type
         .eq('used', false)
         .gt('expires_at', now)
         .maybeSingle();
@@ -57,8 +57,10 @@ const Verify = () => {
           .from('otp_codes')
           .select('*')
           .eq('email', email)
-          .eq('code', otp)
+          .eq('code', otp.toString()) // Convert input to string to match database type
           .maybeSingle();
+
+        console.log('Existing code check:', existingCode);
 
         if (existingCode) {
           if (existingCode.used) {
