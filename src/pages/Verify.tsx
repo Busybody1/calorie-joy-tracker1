@@ -33,60 +33,63 @@ const Verify = () => {
         currentTime: now
       });
 
-      // First, check if the code exists at all
-      const { data: existingCode, error: existingError } = await supabase
+      // First, check if the code exists without any conditions
+      const { data: rawCode, error: rawError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
         .eq('code', otp)
-        .maybeSingle(); // Use maybeSingle instead of single to avoid 406 error
+        .maybeSingle();
 
-      console.log('Existing code check:', {
-        code: existingCode,
-        error: existingError
+      console.log('Raw code check:', {
+        code: rawCode,
+        error: rawError
       });
 
-      if (existingError) {
-        console.error('Error checking code:', existingError);
+      if (rawError) {
+        console.error('Database error:', rawError);
         throw new Error('Error checking verification code');
       }
 
-      if (!existingCode) {
-        console.log('No code found');
+      if (!rawCode) {
+        console.log('No code found for this email/code combination');
         throw new Error('Invalid verification code');
       }
 
-      // Now check if the code is valid (not used and not expired)
-      const isExpired = new Date(existingCode.expires_at) <= new Date(now);
-      console.log('Code validation:', {
-        code: existingCode.code,
-        isUsed: existingCode.used,
-        isExpired,
-        expiresAt: existingCode.expires_at,
-        currentTime: now
+      // Now check specific conditions
+      console.log('Found code details:', {
+        id: rawCode.id,
+        email: rawCode.email,
+        code: rawCode.code,
+        used: rawCode.used,
+        expiresAt: rawCode.expires_at,
+        currentTime: now,
+        isExpired: new Date(rawCode.expires_at) <= new Date(now)
       });
 
-      if (existingCode.used) {
+      if (rawCode.used) {
+        console.log('Code already used');
         throw new Error('This code has already been used');
       }
 
-      if (isExpired) {
+      if (new Date(rawCode.expires_at) <= new Date(now)) {
+        console.log('Code expired');
         throw new Error('This code has expired');
       }
 
-      // Mark OTP as used
+      // If we get here, the code is valid. Mark it as used.
+      console.log('Code is valid, marking as used');
       const { error: updateError } = await supabase
         .from('otp_codes')
         .update({ used: true })
-        .eq('id', existingCode.id);
+        .eq('id', rawCode.id);
 
       if (updateError) {
-        console.error('Error marking OTP as used:', updateError);
+        console.error('Error marking code as used:', updateError);
         throw new Error('Error completing verification');
       }
 
-      console.log('Verification successful, OTP marked as used');
-
+      console.log('Verification successful');
       toast({
         title: "Success!",
         description: "You have successfully logged in.",
