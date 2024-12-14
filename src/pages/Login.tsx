@@ -5,17 +5,44 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleResendConfirmation = async () => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: email,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Confirmation email sent",
+        description: "Please check your inbox and spam folder",
+      });
+    } catch (error: any) {
+      console.error('Resend confirmation error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend confirmation email",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setNeedsEmailConfirmation(false);
 
     try {
       // Basic validation
@@ -35,7 +62,14 @@ const Login = () => {
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        // Check if the error is due to unconfirmed email
+        if (error.message.includes("Email not confirmed") || error.message.includes("email_not_confirmed")) {
+          setNeedsEmailConfirmation(true);
+          throw new Error("Please confirm your email address before logging in");
+        }
+        throw error;
+      }
 
       if (data?.user) {
         // Set session duration to 30 days
@@ -75,6 +109,21 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {needsEmailConfirmation && (
+            <Alert className="mb-4">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                Please confirm your email address before logging in.{" "}
+                <Button
+                  variant="link"
+                  className="p-0 h-auto font-normal"
+                  onClick={handleResendConfirmation}
+                >
+                  Resend confirmation email
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Input
