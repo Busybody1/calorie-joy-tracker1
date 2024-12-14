@@ -39,6 +39,7 @@ const Verify = () => {
       console.log('OTP Verification:', {
         enteredCode: otp,
         dbResponse: otpData,
+        currentTime: new Date().toISOString(),
         error: otpError
       });
 
@@ -47,11 +48,29 @@ const Verify = () => {
       }
 
       if (!otpData) {
-        toast({
-          title: "Code Expired",
-          description: "Please request a new verification code.",
-          variant: "destructive",
-        });
+        // Check if there's an expired code that matches
+        const { data: expiredCode } = await supabase
+          .from('otp_codes')
+          .select('expires_at')
+          .eq('email', email)
+          .eq('code', otp.trim())
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (expiredCode) {
+          toast({
+            title: "Code Expired",
+            description: "This code has expired. Please request a new verification code.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Invalid Code",
+            description: "Please check the code and try again, or request a new one.",
+            variant: "destructive",
+          });
+        }
         return;
       }
 
