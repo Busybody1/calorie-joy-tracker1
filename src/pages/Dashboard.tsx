@@ -30,21 +30,42 @@ const Dashboard = () => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
+    console.log("Dashboard - Effect running, isInitialLoad:", isInitialLoad);
+    
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log("Dashboard - Initial session check:", session);
+      console.log("Dashboard - Starting checkAuth");
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error("Dashboard - Session check error:", error);
+      }
+      
+      console.log("Dashboard - Session check result:", session);
+      
       if (!session?.user?.id) {
         console.log("Dashboard - No session found, redirecting to login");
         navigate('/login', { replace: true });
       } else {
-        console.log("Dashboard - Valid session found:", session.user.id);
+        console.log("Dashboard - Valid session found:", {
+          userId: session.user.id,
+          email: session.user.email,
+          expiresAt: session.expires_at
+        });
         setIsInitialLoad(false);
       }
     };
+    
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log("Dashboard - Auth state changed:", { event, session });
+      console.log("Dashboard - Auth state changed:", { 
+        event, 
+        session,
+        isInitialLoad,
+        hasUserId: session?.user?.id ? 'yes' : 'no',
+        sessionExpiry: session?.expires_at
+      });
+      
       // Only redirect if it's not the initial load and we've confirmed there's no session
       if (!isInitialLoad && !session?.user?.id) {
         console.log("Dashboard - Session ended, redirecting to login");
