@@ -31,16 +31,16 @@ const Dashboard = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate('/login');
+      if (!session?.user?.id) {
+        navigate('/login', { replace: true });
+        return;
       }
     };
     checkAuth();
 
-    // Set up auth state change listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT' || !session) {
-        navigate('/login');
+      if (!session?.user?.id) {
+        navigate('/login', { replace: true });
       }
     });
 
@@ -218,7 +218,6 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 pt-24 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>

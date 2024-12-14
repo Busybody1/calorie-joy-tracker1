@@ -12,20 +12,18 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check if user is already authenticated
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        navigate("/dashboard");
+      if (session?.user?.id) {
+        navigate("/dashboard", { replace: true });
       }
     };
     checkSession();
 
-    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        navigate("/dashboard");
+      if (session?.user?.id) {
+        navigate("/dashboard", { replace: true });
       }
     });
 
@@ -45,7 +43,6 @@ const Login = () => {
 
       if (error) throw error;
 
-      // Navigate to verify page with email
       navigate("/verify", { state: { email } });
       
       toast({
