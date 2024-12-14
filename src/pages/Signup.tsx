@@ -26,26 +26,16 @@ const Signup = () => {
           data: {
             name,
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
       if (error) throw error;
 
       if (data?.user) {
-        // After successful signup, handle Beehiiv subscription
-        try {
-          await supabase.functions.invoke('subscribe-to-beehiiv', {
-            body: { 
-              email,
-              reactivate_existing: true,
-              send_welcome_email: true,
-              utm_source: "calofree"
-            }
-          });
-        } catch (beehiivError) {
-          console.error('Beehiiv subscription error:', beehiivError);
-        }
+        // Set session duration to 30 days
+        await supabase.auth.updateUser({
+          data: { session_duration: 30 * 24 * 60 * 60 } // 30 days in seconds
+        });
 
         navigate("/dashboard");
         toast({

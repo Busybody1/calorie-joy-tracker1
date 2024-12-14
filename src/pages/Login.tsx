@@ -25,17 +25,23 @@ const Login = () => {
 
       if (error) throw error;
 
-      navigate("/dashboard");
-      
-      toast({
-        title: "Welcome back!",
-        description: "You've successfully logged in.",
-      });
+      if (data?.user) {
+        // Set session duration to 30 days
+        await supabase.auth.updateUser({
+          data: { session_duration: 30 * 24 * 60 * 60 } // 30 days in seconds
+        });
+        
+        navigate("/dashboard");
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully logged in.",
+        });
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to log in. Please try again.",
+        description: error.message || "Invalid email or password.",
         variant: "destructive",
       });
     } finally {
