@@ -1,4 +1,4 @@
-import { serve } from "https://deno.fresh.dev/std@v9.6.1/http/server.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const BEEHIIV_API_KEY = Deno.env.get('BEEHIIV_API_KEY');
 const PUBLICATION_ID = 'pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815';
