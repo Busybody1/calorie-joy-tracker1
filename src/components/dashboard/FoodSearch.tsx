@@ -6,6 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { useCredits } from "@/hooks/useCredits";
+import { supabase } from "@/integrations/supabase/client";
 
 const USDA_API_KEY = "ldByUjvqs9QYqAXTMQeHB5omhMFNc1Y7VBgfDW77";
 
@@ -40,7 +41,6 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const { toast } = useToast();
-  const { useCredit, hasCredits } = useCredits();
 
   const getNutrientValue = (nutrients: Nutrient[], targetId: number) => {
     const nutrient = nutrients.find((n) => n.nutrientId === targetId);
@@ -96,25 +96,45 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
     }
   };
 
-  const handleAddFood = (food: Food) => {
-    const calories = getNutrientValue(food.foodNutrients, 1008);
-    const protein = getNutrientValue(food.foodNutrients, 1003);
-    const fat = getNutrientValue(food.foodNutrients, 1004);
-    const carbs = getNutrientValue(food.foodNutrients, 1005);
+  const handleAddFood = async (food: Food) => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      
+      if (!session?.session?.user) {
+        toast({
+          variant: "destructive",
+          title: "Authentication required",
+          description: "Please log in to add foods to your daily intake.",
+        });
+        return;
+      }
 
-    onAddFood({
-      name: food.description,
-      calories,
-      protein,
-      carbs,
-      fat,
-      servings: 1,
-    });
+      const calories = getNutrientValue(food.foodNutrients, 1008);
+      const protein = getNutrientValue(food.foodNutrients, 1003);
+      const fat = getNutrientValue(food.foodNutrients, 1004);
+      const carbs = getNutrientValue(food.foodNutrients, 1005);
 
-    toast({
-      title: "Food added",
-      description: `Added ${food.description} to your daily intake`,
-    });
+      onAddFood({
+        name: food.description,
+        calories,
+        protein,
+        carbs,
+        fat,
+        servings: 1,
+      });
+
+      toast({
+        title: "Food added",
+        description: `Added ${food.description} to your daily intake`,
+      });
+    } catch (error) {
+      console.error("Error adding food:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add food. Please try again.",
+      });
+    }
   };
 
   return (
