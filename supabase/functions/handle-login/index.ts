@@ -68,7 +68,7 @@ Deno.serve(async (req) => {
 
     // Send email with OTP via Mailgun
     const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
-    const MAILGUN_DOMAIN = Deno.env.get('MAILGUN_DOMAIN');
+    const MAILGUN_DOMAIN = 'emailsearch.uk'; // Updated domain here
 
     if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
       console.error('Mailgun configuration is missing');
