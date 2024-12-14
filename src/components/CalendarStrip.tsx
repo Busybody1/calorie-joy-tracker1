@@ -26,6 +26,8 @@ export const CalendarStrip = ({ date, onSelect }: CalendarStripProps) => {
     onSelect(newDate);
   };
 
+  const today = startOfDay(new Date());
+
   return (
     <div className="flex flex-col items-center space-y-2 p-2 rounded-md border bg-white">
       <div className="text-sm font-medium text-gray-600">
@@ -49,6 +51,10 @@ export const CalendarStrip = ({ date, onSelect }: CalendarStripProps) => {
                 isSameDay(d, date)
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-accent/50"
+              } ${
+                isSameDay(d, today)
+                  ? "underline underline-offset-4 decoration-2"
+                  : ""
               }`}
               onClick={() => onSelect(d)}
             >
