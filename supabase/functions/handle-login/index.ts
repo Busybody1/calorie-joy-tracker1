@@ -66,8 +66,34 @@ Deno.serve(async (req) => {
         expires_at: expiresAt.toISOString(),
       });
 
-    // Send email with OTP (for now, just console.log it)
-    console.log(`OTP for ${email}: ${otp}`);
+    // Send email with OTP via Mailgun
+    const MAILGUN_API_KEY = Deno.env.get('MAILGUN_API_KEY');
+    const MAILGUN_DOMAIN = Deno.env.get('MAILGUN_DOMAIN');
+
+    if (!MAILGUN_API_KEY || !MAILGUN_DOMAIN) {
+      throw new Error('Mailgun configuration is missing');
+    }
+
+    const mailgunResponse = await fetch(
+      `https://api.mailgun.net/v3/${MAILGUN_DOMAIN}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Basic ${btoa(`api:${MAILGUN_API_KEY}`)}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          from: `Calorie Joy <mailgun@${MAILGUN_DOMAIN}>`,
+          to: email,
+          subject: 'Your Login OTP Code',
+          text: `Your one-time password (OTP) is: ${otp}. This code is valid for the next 5 minutes.`,
+        }),
+      }
+    );
+
+    if (!mailgunResponse.ok) {
+      throw new Error('Failed to send email');
+    }
 
     return new Response(
       JSON.stringify({ message: 'OTP sent successfully' }),
