@@ -10,7 +10,7 @@ const Verify = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
-  const navigate = navigate();
+  const navigate = useNavigate(); // Correctly use useNavigate hook
   const { toast } = useToast();
   const email = location.state?.email;
 
