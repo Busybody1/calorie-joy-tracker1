@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import logo from "../assets/logo.png";
 
 const Header = () => {
   return (
@@ -13,7 +14,11 @@ const Header = () => {
           <Button variant="ghost" className="text-gray-600 hover:text-gray-900 rounded-full">
             Login
           </Button>
-          <img src="/placeholder.svg" alt="BusyBody Logo" className="h-8 w-8 rounded-full shadow-sm" />
+          <img 
+            src={logo} 
+            alt="BusyBody Logo" 
+            className="h-8 w-8 rounded-full shadow-sm object-cover border-2 border-primary/20"
+          />
         </div>
       </div>
     </header>
