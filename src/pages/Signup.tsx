@@ -19,31 +19,7 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // Check if user is already subscribed to Beehiiv using the Edge Function
-      const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-beehiiv-subscription', {
-        body: { email }
-      });
-
-      if (subscriptionError) throw subscriptionError;
-
-      // If user is not subscribed, subscribe them
-      if (!subscriptionData.isSubscribed) {
-        const { error: subscribeError } = await supabase.functions.invoke('subscribe-to-beehiiv', {
-          body: { 
-            email,
-            reactivate_existing: false,
-            send_welcome_email: false,
-            utm_source: "calofree",
-            utm_medium: "ads",
-            utm_campaign: "busybits",
-            referring_site: "www.freecaloriecounter.com/"
-          }
-        });
-
-        if (subscribeError) throw subscribeError;
-      }
-
-      // Sign up the user with Supabase
+      // First try to sign up the user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -56,12 +32,49 @@ const Signup = () => {
 
       if (error) throw error;
 
-      navigate("/dashboard");
-      
-      toast({
-        title: "Welcome!",
-        description: "Your account has been created successfully.",
-      });
+      // Only proceed with Beehiiv subscription if signup was successful
+      if (data?.user) {
+        try {
+          // Check if user is already subscribed to Beehiiv
+          const { data: subscriptionData, error: subscriptionError } = await supabase.functions.invoke('check-beehiiv-subscription', {
+            body: { email }
+          });
+
+          if (subscriptionError) {
+            console.error('Beehiiv subscription check error:', subscriptionError);
+            // Don't throw here, just log the error and continue
+          }
+
+          // If user is not subscribed, try to subscribe them
+          if (subscriptionData && !subscriptionData.isSubscribed) {
+            const { error: subscribeError } = await supabase.functions.invoke('subscribe-to-beehiiv', {
+              body: { 
+                email,
+                reactivate_existing: false,
+                send_welcome_email: false,
+                utm_source: "calofree",
+                utm_medium: "ads",
+                utm_campaign: "busybits",
+                referring_site: "www.freecaloriecounter.com/"
+              }
+            });
+
+            if (subscribeError) {
+              console.error('Beehiiv subscription error:', subscribeError);
+              // Don't throw here, just log the error and continue
+            }
+          }
+        } catch (beehiivError) {
+          console.error('Beehiiv operation error:', beehiivError);
+          // Don't throw here, just log the error and continue
+        }
+
+        navigate("/dashboard");
+        toast({
+          title: "Welcome!",
+          description: "Your account has been created successfully.",
+        });
+      }
     } catch (error: any) {
       console.error('Signup error:', error);
       toast({
