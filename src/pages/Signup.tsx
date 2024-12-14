@@ -19,12 +19,29 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
+      // Basic validation
+      if (!email || !password || !name) {
+        throw new Error("Please fill in all fields");
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        throw new Error("Please enter a valid email address");
+      }
+
+      // Validate password length
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters long");
+      }
+
+      // Attempt to create account
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: {
-            name,
+            name: name.trim(),
           },
         },
       });
@@ -39,8 +56,8 @@ const Signup = () => {
 
         navigate("/dashboard");
         toast({
-          title: "Welcome!",
-          description: "Your account has been created successfully.",
+          title: "Success!",
+          description: "Your account has been created. Welcome!",
         });
       }
     } catch (error: any) {
