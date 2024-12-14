@@ -32,15 +32,14 @@ const Verify = () => {
         currentTime: now
       });
 
+      // First, check if there's a valid code
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
-        .eq('code', otp.trim())
+        .eq('code', otp)
         .eq('used', false)
         .gt('expires_at', now)
-        .order('created_at', { ascending: false })
-        .limit(1)
         .maybeSingle();
 
       console.log('Database response:', {
@@ -53,24 +52,28 @@ const Verify = () => {
       }
 
       if (!otpData) {
-        // Check if the code exists but is expired
-        const { data: expiredCode, error: expiredError } = await supabase
+        // Check specifically why the code is invalid
+        const { data: existingCode } = await supabase
           .from('otp_codes')
-          .select('expires_at')
+          .select('*')
           .eq('email', email)
-          .eq('code', otp.trim())
+          .eq('code', otp)
           .maybeSingle();
 
-        if (expiredError) {
-          console.error('Error checking expired code:', expiredError);
-        }
-
-        if (expiredCode) {
-          toast({
-            title: "Code Expired",
-            description: "This code has expired. Please request a new verification code.",
-            variant: "destructive",
-          });
+        if (existingCode) {
+          if (existingCode.used) {
+            toast({
+              title: "Code Already Used",
+              description: "This code has already been used. Please request a new verification code.",
+              variant: "destructive",
+            });
+          } else if (new Date(existingCode.expires_at) <= new Date()) {
+            toast({
+              title: "Code Expired",
+              description: "This code has expired. Please request a new verification code.",
+              variant: "destructive",
+            });
+          }
         } else {
           toast({
             title: "Invalid Code",
