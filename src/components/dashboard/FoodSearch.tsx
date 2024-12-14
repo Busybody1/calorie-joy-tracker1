@@ -82,10 +82,11 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
   };
 
   const handleAddFood = (food: Food) => {
-    const calories = getNutrientValue(food.foodNutrients, 2047); // Energy
-    const protein = getNutrientValue(food.foodNutrients, 1003); // Protein
-    const fat = getNutrientValue(food.foodNutrients, 1004); // Fat
-    const carbs = getNutrientValue(food.foodNutrients, 1005); // Carbohydrates
+    // Changed from 2047 to 1008 for Energy (kcal)
+    const calories = getNutrientValue(food.foodNutrients, 1008);
+    const protein = getNutrientValue(food.foodNutrients, 1003);
+    const fat = getNutrientValue(food.foodNutrients, 1004);
+    const carbs = getNutrientValue(food.foodNutrients, 1005);
 
     onAddFood({
       name: food.description,
@@ -133,7 +134,7 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
                       <div className="text-sm text-muted-foreground space-y-1">
                         <p>
                           Calories:{" "}
-                          {getNutrientValue(food.foodNutrients, 2047).toFixed(1)}{" "}
+                          {getNutrientValue(food.foodNutrients, 1008).toFixed(1)}{" "}
                           kcal
                         </p>
                         <p>
