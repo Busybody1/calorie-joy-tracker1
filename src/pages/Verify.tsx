@@ -27,12 +27,10 @@ const Verify = () => {
     try {
       const now = new Date().toISOString();
       
-      // Log the exact format of input code
-      console.log('Input code details:', {
-        code: otp,
-        type: typeof otp,
-        length: otp.length,
-        trimmedLength: otp.trim().length
+      console.log('Verification attempt:', {
+        email: email,
+        inputCode: otp,
+        currentTime: now
       });
 
       // First, check if there's a valid code
@@ -40,60 +38,39 @@ const Verify = () => {
         .from('otp_codes')
         .select('*')
         .eq('email', email)
-        .eq('code', otp.trim())
+        .eq('code', otp)
         .eq('used', false)
         .gt('expires_at', now)
-        .maybeSingle();
-
-      // Log the exact query and response
-      console.log('Database query:', {
-        email: email,
-        code: otp.trim(),
-        currentTime: now
-      });
+        .single();
 
       console.log('Database response:', {
         data: otpData,
-        error: otpError
+        error: otpError?.message
       });
 
       if (otpError) {
-        throw otpError;
-      }
+        if (otpError.code === 'PGRST116') {
+          // No matching record found
+          const { data: existingCode } = await supabase
+            .from('otp_codes')
+            .select('*')
+            .eq('email', email)
+            .eq('code', otp)
+            .single();
 
-      if (!otpData) {
-        // Check specifically why the code is invalid
-        const { data: existingCode } = await supabase
-          .from('otp_codes')
-          .select('*')
-          .eq('email', email)
-          .eq('code', otp.trim())
-          .maybeSingle();
+          console.log('Existing code check:', existingCode);
 
-        console.log('Existing code details:', existingCode);
-
-        if (existingCode) {
-          if (existingCode.used) {
-            toast({
-              title: "Code Already Used",
-              description: "This code has already been used. Please request a new verification code.",
-              variant: "destructive",
-            });
-          } else if (new Date(existingCode.expires_at) <= new Date()) {
-            toast({
-              title: "Code Expired",
-              description: "This code has expired. Please request a new verification code.",
-              variant: "destructive",
-            });
+          if (existingCode) {
+            if (existingCode.used) {
+              throw new Error('This code has already been used');
+            } else if (new Date(existingCode.expires_at) <= new Date()) {
+              throw new Error('This code has expired');
+            }
+          } else {
+            throw new Error('Invalid verification code');
           }
-        } else {
-          toast({
-            title: "Invalid Code",
-            description: "Please check the code and try again, or request a new one.",
-            variant: "destructive",
-          });
         }
-        return;
+        throw otpError;
       }
 
       // Mark OTP as used
@@ -115,7 +92,7 @@ const Verify = () => {
       console.error('Verification error:', error);
       toast({
         title: "Error",
-        description: "An unexpected error occurred. Please try again.",
+        description: error.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
