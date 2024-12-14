@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -10,14 +10,15 @@ const Verify = () => {
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate(); // Correctly use useNavigate hook
+  const navigate = useNavigate();
   const { toast } = useToast();
   const email = location.state?.email;
 
-  if (!email) {
-    navigate("/login");
-    return null;
-  }
+  useEffect(() => {
+    if (!email) {
+      navigate("/login");
+    }
+  }, [email, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -81,9 +82,9 @@ const Verify = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex justify-center mb-8">
               <InputOTP
+                maxLength={6}
                 value={otp}
                 onChange={setOtp}
-                maxLength={6}
                 render={({ slots }) => (
                   <InputOTPGroup className="gap-2">
                     {slots.map((slot, index) => (
