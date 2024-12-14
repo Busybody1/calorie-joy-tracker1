@@ -1,9 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "../assets/logo.png";
 
 const Header = () => {
   const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
 
   return (
     <header className="fixed w-full bg-white/80 backdrop-blur-sm z-50 border-b shadow-sm">
@@ -27,6 +33,13 @@ const Header = () => {
             onClick={() => navigate("/login")}
           >
             Login
+          </Button>
+          <Button
+            variant="ghost"
+            className="text-gray-600 hover:text-gray-900 rounded-full"
+            onClick={handleLogout}
+          >
+            Logout
           </Button>
           <img 
             src={logo} 

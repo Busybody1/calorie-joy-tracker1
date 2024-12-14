@@ -19,7 +19,6 @@ const Signup = () => {
     setIsLoading(true);
 
     try {
-      // First, sign up the user with Supabase
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -27,6 +26,7 @@ const Signup = () => {
           data: {
             name,
           },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
 
@@ -38,14 +38,13 @@ const Signup = () => {
           await supabase.functions.invoke('subscribe-to-beehiiv', {
             body: { 
               email,
-              reactivate_existing: true, // Changed to true to handle existing subscribers
+              reactivate_existing: true,
               send_welcome_email: true,
               utm_source: "calofree"
             }
           });
         } catch (beehiivError) {
           console.error('Beehiiv subscription error:', beehiivError);
-          // Continue even if Beehiiv subscription fails
         }
 
         navigate("/dashboard");
