@@ -1,7 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const Hero = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="pt-32 pb-16 px-4 animate-fade-in bg-gradient-to-b from-white to-[#e8fbfd]">
       <div className="container mx-auto max-w-7xl">
@@ -15,6 +18,7 @@ const Hero = () => {
             className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-lg rounded-full shadow-lg 
               hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0.5
               active:shadow-md transform-gpu"
+            onClick={() => navigate("/login")}
           >
             Start Tracking For Free
           </Button>
