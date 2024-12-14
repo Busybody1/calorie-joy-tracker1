@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Newsletter = () => {
   const [email, setEmail] = useState("");
@@ -13,20 +14,19 @@ const Newsletter = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/subscribe-newsletter`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ email }),
+      const { data, error } = await supabase.functions.invoke('subscribe-newsletter', {
+        body: { 
+          email,
+          reactivate_existing: false,
+          send_welcome_email: false,
+          utm_source: "calofree",
+          utm_medium: "ads",
+          utm_campaign: "busybits",
+          referring_site: "www.freecaloriecounter.com/"
+        }
       });
 
-      const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to subscribe');
-      }
+      if (error) throw error;
 
       toast({
         title: "Success!",
