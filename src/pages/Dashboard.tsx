@@ -9,6 +9,7 @@ import { useToast } from "@/components/ui/use-toast";
 import logo from "../assets/logo.png";
 import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCredits } from "@/hooks/useCredits";
 
 interface Food {
   name: string;
@@ -23,6 +24,7 @@ const Dashboard = () => {
   const [date, setDate] = useState<Date>(new Date());
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { credits, isLoading: isLoadingCredits } = useCredits();
 
   // Fetch foods for the selected date
   const { data: selectedFoods = [], isLoading } = useQuery({
@@ -171,7 +173,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="fixed top-0 w-full bg-white/80 backdrop-blur-sm border-b z-50">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
@@ -186,7 +187,10 @@ const Dashboard = () => {
             <CalendarStrip date={date} onSelect={setDate} />
 
             <div className="text-sm font-medium">
-              Credits Left: <span className="text-primary">8/10</span>
+              Credits Left:{" "}
+              <span className="text-primary">
+                {isLoadingCredits ? "..." : credits}/30
+              </span>
             </div>
           </div>
         </div>

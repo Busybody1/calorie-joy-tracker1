@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { useCredits } from "@/hooks/useCredits";
 
 const USDA_API_KEY = "ldByUjvqs9QYqAXTMQeHB5omhMFNc1Y7VBgfDW77";
 
@@ -39,6 +40,7 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<Food[]>([]);
   const { toast } = useToast();
+  const { useCredit, hasCredits } = useCredits();
 
   const getNutrientValue = (nutrients: Nutrient[], targetId: number) => {
     const nutrient = nutrients.find((n) => n.nutrientId === targetId);
@@ -48,9 +50,18 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
+    if (!hasCredits) {
+      toast({
+        variant: "destructive",
+        title: "No credits remaining",
+        description: "Please wait for your credits to reset.",
+      });
+      return;
+    }
 
     setIsLoading(true);
     try {
+      await useCredit();
       const response = await fetch(
         `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(
           searchQuery
@@ -108,10 +119,15 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
       <form onSubmit={handleSearch} className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search foods..."
+          placeholder={
+            hasCredits
+              ? "Search foods..."
+              : "No credits remaining. Please wait for reset."
+          }
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
+          disabled={!hasCredits}
         />
       </form>
 
