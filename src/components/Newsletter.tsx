@@ -13,7 +13,7 @@ const Newsletter = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://api.beehiiv.com/v2/publications/pub_00000000-0000-0000-0000-000000000000/subscriptions", {
+      const response = await fetch("https://api.beehiiv.com/v2/publications/pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815/subscriptions", {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${process.env.BEEHIIV_API_KEY || ''}`,
