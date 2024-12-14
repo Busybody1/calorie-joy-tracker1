@@ -33,12 +33,14 @@ const Verify = () => {
         currentTime: now
       });
 
-      // First, just check if the code exists for this email
+      // First, check if the code exists and is valid
       const { data: rawCode, error: rawError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
         .eq('code', otp)
+        .eq('used', false)
+        .gt('expires_at', now)
         .maybeSingle();
 
       console.log('Raw code check:', {
@@ -52,29 +54,8 @@ const Verify = () => {
       }
 
       if (!rawCode) {
-        console.log('No code found for this email/code combination');
-        throw new Error('Invalid verification code');
-      }
-
-      // Now check specific conditions
-      console.log('Found code details:', {
-        id: rawCode.id,
-        email: rawCode.email,
-        code: rawCode.code,
-        used: rawCode.used,
-        expiresAt: rawCode.expires_at,
-        currentTime: now,
-        isExpired: new Date(rawCode.expires_at) <= new Date(now)
-      });
-
-      if (rawCode.used) {
-        console.log('Code already used');
-        throw new Error('This code has already been used');
-      }
-
-      if (new Date(rawCode.expires_at) <= new Date(now)) {
-        console.log('Code expired');
-        throw new Error('This code has expired');
+        console.log('No valid code found');
+        throw new Error('Invalid or expired verification code');
       }
 
       // If we get here, the code is valid. Mark it as used.
