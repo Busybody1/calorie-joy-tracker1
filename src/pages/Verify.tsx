@@ -50,12 +50,11 @@ const Verify = () => {
       // Now try to find the specific code
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
-        .select('*')
+        .select()
         .eq('email', email)
         .eq('code', otp)
         .eq('used', false)
-        .gt('expires_at', now)
-        .maybeSingle();
+        .gt('expires_at', now);
 
       console.log('Verification query result:', {
         data: otpData,
@@ -68,14 +67,16 @@ const Verify = () => {
         throw otpError;
       }
 
-      if (!otpData) {
+      // Check if we found a valid code
+      if (!otpData || otpData.length === 0) {
         // Try to find the code without time/used constraints to understand why it failed
-        const { data: existingCode } = await supabase
+        const { data: existingCodes } = await supabase
           .from('otp_codes')
-          .select('*')
+          .select()
           .eq('email', email)
-          .eq('code', otp)
-          .single();
+          .eq('code', otp);
+
+        const existingCode = existingCodes?.[0];
 
         if (existingCode) {
           console.log('Code found but invalid because:', {
@@ -100,7 +101,7 @@ const Verify = () => {
       const { error: updateError } = await supabase
         .from('otp_codes')
         .update({ used: true })
-        .eq('id', otpData.id);
+        .eq('id', otpData[0].id);
 
       if (updateError) {
         console.error('Error marking OTP as used:', updateError);
