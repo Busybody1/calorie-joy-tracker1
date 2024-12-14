@@ -9,12 +9,18 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     const { preferences } = await req.json();
+    console.log('Received preferences:', preferences);
+
+    if (!GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY is not set');
+    }
 
     const prompt = `
 Dietary Preference: ${preferences.diet}
@@ -48,17 +54,9 @@ Fats per Serving: [Fats in grams]
 Ingredients: [List each ingredient with quantity in grams and also specify counts, e.g., 2 peppers (20g)],
 
 Instructions: [Step-by-step instructions to prepare the meal]
-
-Constraints:
-- Must adhere to ${preferences.diet} if specified
-- Must not exceed ${preferences.maxCalories} kcal per serving
-- Exclude foods in the list: ${preferences.foodsToAvoid}
-- Include ${preferences.foodPreferences} if possible
-- Focus on ${preferences.macroFocus} as the key macro
-- Stay under $${preferences.maxBudget}
-- Sum of macros must match total calories exactly, no approximations
 `;
 
+    console.log('Sending request to Groq API...');
     const response = await fetch('https://api.groq.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -73,17 +71,45 @@ Constraints:
       }),
     });
 
-    const data = await response.json();
-    const generatedMeal = data.choices[0].message.content;
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Groq API error:', errorData);
+      throw new Error(`Groq API error: ${response.status} ${errorData}`);
+    }
 
-    return new Response(JSON.stringify({ generatedMeal }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    const data = await response.json();
+    console.log('Groq API response:', data);
+
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid response format from Groq API:', data);
+      throw new Error('Invalid response format from Groq API');
+    }
+
+    const generatedMeal = data.choices[0].message.content;
+    console.log('Generated meal:', generatedMeal);
+
+    return new Response(
+      JSON.stringify({ generatedMeal }),
+      { 
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        } 
+      }
+    );
   } catch (error) {
     console.error('Error in generate-meal function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: error.message || 'An error occurred while generating the meal'
+      }),
+      { 
+        status: 500,
+        headers: { 
+          ...corsHeaders,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
   }
 });
