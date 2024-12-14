@@ -16,7 +16,7 @@ const Newsletter = () => {
       const response = await fetch("https://api.beehiiv.com/v2/publications/pub_050c90b4-4ea8-4f89-a05b-f1c3256c5815/subscriptions", {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${process.env.BEEHIIV_API_KEY || ''}`,
+          'Authorization': 'Bearer VzAM0rJjyKSnCzDHgSZZqtHchqB9cwT1Ip7U2x5WVeSfMG8lwPVNGK38nH7ptHp8',
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -40,6 +40,7 @@ const Newsletter = () => {
       });
       setEmail("");
     } catch (error) {
+      console.error('Subscription error:', error);
       toast({
         title: "Error",
         description: "Failed to subscribe. Please try again later.",
