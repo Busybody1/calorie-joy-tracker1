@@ -27,6 +27,7 @@ const Dashboard = () => {
   const queryClient = useQueryClient();
   const { credits, isLoading: isLoadingCredits } = useCredits();
   const navigate = useNavigate();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,16 +36,17 @@ const Dashboard = () => {
       if (!session?.user?.id) {
         console.log("Dashboard - No session found, redirecting to login");
         navigate('/login', { replace: true });
-        return;
       } else {
         console.log("Dashboard - Valid session found:", session.user.id);
+        setIsInitialLoad(false);
       }
     };
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log("Dashboard - Auth state changed:", { event, session });
-      if (!session?.user?.id) {
+      // Only redirect if it's not the initial load and we've confirmed there's no session
+      if (!isInitialLoad && !session?.user?.id) {
         console.log("Dashboard - Session ended, redirecting to login");
         navigate('/login', { replace: true });
       }
@@ -54,7 +56,7 @@ const Dashboard = () => {
       console.log("Dashboard - Cleaning up auth subscription");
       subscription.unsubscribe();
     };
-  }, [navigate]);
+  }, [navigate, isInitialLoad]);
 
   const { data: selectedFoods = [], isLoading } = useQuery({
     queryKey: ["daily-foods", format(date, "yyyy-MM-dd")],
