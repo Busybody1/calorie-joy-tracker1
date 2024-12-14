@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +32,7 @@ const Verify = () => {
         .eq('code', otp)
         .eq('used', false)
         .gt('expires_at', new Date().toISOString())
-        .maybeSingle(); // Use maybeSingle() instead of single()
+        .maybeSingle();
 
       if (error) {
         console.error('Error verifying OTP:', error);
