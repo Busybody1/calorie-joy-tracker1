@@ -46,18 +46,18 @@ const Signup = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes("User already registered")) {
+          throw new Error("An account with this email already exists. Please try logging in instead.");
+        }
+        throw error;
+      }
 
       if (data?.user) {
-        // Set session duration to 30 days
-        await supabase.auth.updateUser({
-          data: { session_duration: 30 * 24 * 60 * 60 } // 30 days in seconds
-        });
-
         navigate("/dashboard");
         toast({
-          title: "Success!",
-          description: "Your account has been created. Welcome!",
+          title: "Account Created Successfully!",
+          description: "Welcome to CaloFree Tracker! You can now start tracking your meals.",
         });
       }
     } catch (error: any) {
