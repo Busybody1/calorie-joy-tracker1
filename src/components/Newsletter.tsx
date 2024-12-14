@@ -23,11 +23,10 @@ const Newsletter = () => {
           email: email,
           reactivate_existing: false,
           send_welcome_email: false,
-          utm_source: "CaloFree Ad",
-          utm_medium: "Ad",
-          utm_campaign: "BusyBits Subs",
-          referring_site: "www.calofree-counter.com",
-          custom_fields: []
+          utm_source: "calofree",
+          utm_medium: "ads",
+          utm_campaign: "busybits",
+          referring_site: "www.freecaloriecounter.com/"
         })
       });
 
