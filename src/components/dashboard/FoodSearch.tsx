@@ -50,18 +50,10 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
-    if (!hasCredits) {
-      toast({
-        variant: "destructive",
-        title: "No credits remaining",
-        description: "Please wait for your credits to reset.",
-      });
-      return;
-    }
 
     setIsLoading(true);
     try {
-      await useCredit();
+      console.log("Starting food search for query:", searchQuery);
       const response = await fetch(
         `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(
           searchQuery
@@ -69,19 +61,31 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
       );
 
       if (!response.ok) {
-        throw new Error("Failed to fetch food data");
+        console.error("USDA API Error:", {
+          status: response.status,
+          statusText: response.statusText,
+        });
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
-      setSearchResults(data.foods || []);
+      console.log("USDA API Response:", data);
 
-      if (data.foods?.length === 0) {
+      if (!data.foods) {
+        console.error("No foods array in response:", data);
+        throw new Error("Invalid response format from USDA API");
+      }
+
+      setSearchResults(data.foods);
+
+      if (data.foods.length === 0) {
         toast({
           title: "No foods found",
           description: "Try a different search term",
         });
       }
     } catch (error) {
+      console.error("Food search error:", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -93,7 +97,6 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
   };
 
   const handleAddFood = (food: Food) => {
-    // Changed from 2047 to 1008 for Energy (kcal)
     const calories = getNutrientValue(food.foodNutrients, 1008);
     const protein = getNutrientValue(food.foodNutrients, 1003);
     const fat = getNutrientValue(food.foodNutrients, 1004);
@@ -119,15 +122,10 @@ export const FoodSearch = ({ onAddFood }: FoodSearchProps) => {
       <form onSubmit={handleSearch} className="relative">
         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder={
-            hasCredits
-              ? "Search foods..."
-              : "No credits remaining. Please wait for reset."
-          }
+          placeholder="Search foods..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-9"
-          disabled={!hasCredits}
         />
       </form>
 
