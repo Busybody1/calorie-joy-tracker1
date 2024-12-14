@@ -9,13 +9,13 @@ export const useCredits = () => {
   const { data: credits, isLoading } = useQuery({
     queryKey: ["user-credits"],
     queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("user_credits")
         .select("credits_remaining")
-        .eq("user_id", user.user.id)
+        .eq("email", user.email)
         .single();
 
       if (error) throw error;
@@ -25,13 +25,13 @@ export const useCredits = () => {
 
   const { mutateAsync: useCredit } = useMutation({
     mutationFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error("Not authenticated");
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
         .from("user_credits")
         .update({ credits_remaining: (credits || 0) - 1 })
-        .eq("user_id", user.user.id)
+        .eq("email", user.email)
         .select("credits_remaining")
         .single();
 
