@@ -25,26 +25,22 @@ const Verify = () => {
     setIsLoading(true);
 
     try {
+      // Query for the most recent, unused, and non-expired OTP
       const { data, error } = await supabase
         .from('otp_codes')
         .select()
         .eq('email', email)
-        .eq('code', otp)
         .eq('used', false)
         .gt('expires_at', new Date().toISOString())
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) {
-        console.error('Error verifying OTP:', error);
-        toast({
-          title: "Error",
-          description: "Failed to verify code. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        throw error;
       }
 
-      if (!data) {
+      if (!data || data.code !== otp) {
         toast({
           title: "Invalid Code",
           description: "The code is invalid or has expired. Please check and try again.",
@@ -60,13 +56,7 @@ const Verify = () => {
         .eq('id', data.id);
 
       if (updateError) {
-        console.error('Error marking OTP as used:', updateError);
-        toast({
-          title: "Error",
-          description: "Something went wrong. Please try again.",
-          variant: "destructive",
-        });
-        return;
+        throw updateError;
       }
 
       // Success! Navigate to dashboard
@@ -108,6 +98,8 @@ const Verify = () => {
             <div className="flex justify-center mb-8">
               <Input
                 type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 value={otp}
                 onChange={handleOtpChange}
                 placeholder="Enter 6-digit code"

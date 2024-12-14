@@ -61,7 +61,7 @@ export type Database = {
           code: string
           created_at?: string | null
           email: string
-          expires_at: string
+          expires_at?: string
           id?: string
           used?: boolean | null
         }
