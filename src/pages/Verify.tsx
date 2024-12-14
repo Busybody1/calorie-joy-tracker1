@@ -77,9 +77,9 @@ const Verify = () => {
         .update({ used: true })
         .eq("id", codeCheck.id);
 
-      // Check if user already exists
-      const { data: existingUser, error: userCheckError } = await supabase.auth.admin
-        .getUserByEmail(email);
+      // Check if user already exists using getUser
+      const { data: existingUser, error: userCheckError } = await supabase.auth
+        .getUser();
 
       console.log("User check result:", { existingUser, userCheckError });
 
