@@ -32,22 +32,42 @@ const Verify = () => {
         .eq('code', otp)
         .eq('used', false)
         .gt('expires_at', new Date().toISOString())
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single()
 
-      if (error || !data) {
+      if (error) {
+        console.error('Error verifying OTP:', error);
+        toast({
+          title: "Error",
+          description: "Failed to verify code. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!data) {
         toast({
           title: "Invalid Code",
-          description: "Please check the code and try again.",
+          description: "The code is invalid or has expired. Please check and try again.",
           variant: "destructive",
         });
         return;
       }
 
       // Mark OTP as used
-      await supabase
+      const { error: updateError } = await supabase
         .from('otp_codes')
         .update({ used: true })
         .eq('id', data.id);
+
+      if (updateError) {
+        console.error('Error marking OTP as used:', updateError);
+        toast({
+          title: "Error",
+          description: "Something went wrong. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       // Success! Navigate to dashboard
       toast({
