@@ -25,48 +25,37 @@ const Verify = () => {
     setIsLoading(true);
 
     try {
-      console.log('Verifying OTP:', { 
-        enteredOtp: otp,
-        email: email,
-        currentTime: new Date().toISOString()
-      });
-
-      // First, get the most recent valid OTP for this email
-      const { data, error } = await supabase
+      // Get the most recent valid OTP for this email
+      const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
-        .select()
+        .select('*')
         .eq('email', email)
         .eq('used', false)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
         .limit(1)
-        .maybeSingle();
+        .single();
 
-      console.log('Database response:', { data, error });
+      console.log('OTP Verification:', {
+        enteredCode: otp,
+        dbResponse: otpData,
+        error: otpError
+      });
 
-      if (error) {
-        throw error;
-      }
-
-      if (!data) {
+      if (otpError || !otpData) {
         toast({
           title: "Code Expired",
-          description: "The verification code has expired. Please request a new one.",
+          description: "Please request a new verification code.",
           variant: "destructive",
         });
         return;
       }
 
       // Compare the entered OTP with the one from database
-      if (data.code !== otp.trim()) {
-        console.log('OTP mismatch:', {
-          entered: otp.trim(),
-          expected: data.code,
-          match: data.code === otp.trim()
-        });
+      if (otpData.code !== otp.trim()) {
         toast({
           title: "Invalid Code",
-          description: "The code is invalid. Please check and try again.",
+          description: "The code you entered is incorrect. Please try again.",
           variant: "destructive",
         });
         return;
@@ -76,7 +65,7 @@ const Verify = () => {
       const { error: updateError } = await supabase
         .from('otp_codes')
         .update({ used: true })
-        .eq('id', data.id);
+        .eq('id', otpData.id);
 
       if (updateError) {
         throw updateError;
@@ -92,7 +81,7 @@ const Verify = () => {
       console.error('Verification error:', error);
       toast({
         title: "Error",
-        description: "Something went wrong. Please try again.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
