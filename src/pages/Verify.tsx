@@ -27,75 +27,73 @@ const Verify = () => {
     try {
       const now = new Date().toISOString();
       
-      // Log input validation
-      console.log('Input validation:', {
+      console.log('Starting verification process:', {
         email,
-        inputCode: otp,
-        codeLength: otp.length,
-        codeType: typeof otp,
-        trimmedLength: otp.trim().length,
+        code: otp,
         currentTime: now
       });
 
-      // First, check if the code exists without additional conditions
-      console.log('Executing database query with parameters:', {
-        email,
-        code: otp,
-        queryTime: new Date().toISOString()
-      });
+      // First, get all recent codes for this email for debugging
+      const { data: recentCodes, error: recentError } = await supabase
+        .from('otp_codes')
+        .select('*')
+        .eq('email', email)
+        .order('created_at', { ascending: false })
+        .limit(5);
 
+      console.log('Recent codes found:', recentCodes);
+      
+      if (recentError) {
+        console.error('Error fetching recent codes:', recentError);
+      }
+
+      // Now try to find the specific code
       const { data: otpData, error: otpError } = await supabase
         .from('otp_codes')
         .select('*')
         .eq('email', email)
         .eq('code', otp)
+        .eq('used', false)
+        .gt('expires_at', now)
         .maybeSingle();
 
-      console.log('Full database response:', {
+      console.log('Verification query result:', {
         data: otpData,
-        error: otpError?.message,
-        errorDetails: otpError
+        error: otpError,
+        queryTime: now
       });
 
-      // If we got data, log its details
-      if (otpData) {
-        console.log('OTP record found:', {
-          storedCode: otpData.code,
-          storedEmail: otpData.email,
-          isUsed: otpData.used,
-          expiresAt: otpData.expires_at,
-          isExpired: new Date(otpData.expires_at) <= new Date(),
-          currentTime: new Date().toISOString()
-        });
-      } else {
-        console.log('No OTP record found with these parameters');
-        
-        // Additional check to see if there are any codes for this email
-        const { data: allCodes } = await supabase
-          .from('otp_codes')
-          .select('*')
-          .eq('email', email)
-          .order('created_at', { ascending: false })
-          .limit(5);
-        
-        console.log('Recent codes for this email:', allCodes);
-      }
-
       if (otpError) {
+        console.error('Database error:', otpError);
         throw otpError;
       }
 
       if (!otpData) {
+        // Try to find the code without time/used constraints to understand why it failed
+        const { data: existingCode } = await supabase
+          .from('otp_codes')
+          .select('*')
+          .eq('email', email)
+          .eq('code', otp)
+          .single();
+
+        if (existingCode) {
+          console.log('Code found but invalid because:', {
+            isUsed: existingCode.used,
+            isExpired: new Date(existingCode.expires_at) <= new Date(),
+            expiresAt: existingCode.expires_at,
+            currentTime: now
+          });
+
+          if (existingCode.used) {
+            throw new Error('This code has already been used');
+          }
+          if (new Date(existingCode.expires_at) <= new Date()) {
+            throw new Error('This code has expired');
+          }
+        }
+        
         throw new Error('Invalid verification code');
-      }
-
-      // Now check the code's validity
-      if (otpData.used) {
-        throw new Error('This code has already been used');
-      }
-
-      if (new Date(otpData.expires_at) <= new Date()) {
-        throw new Error('This code has expired');
       }
 
       // Mark OTP as used
