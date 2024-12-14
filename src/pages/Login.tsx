@@ -15,19 +15,24 @@ const Login = () => {
   useEffect(() => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Login - Initial session check:", session);
       if (session?.user?.id) {
+        console.log("Login - User is authenticated, redirecting to dashboard");
         navigate("/dashboard", { replace: true });
       }
     };
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("Login - Auth state changed:", { event, session });
       if (session?.user?.id) {
+        console.log("Login - User authenticated via state change, redirecting to dashboard");
         navigate("/dashboard", { replace: true });
       }
     });
 
     return () => {
+      console.log("Login - Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, [navigate]);
@@ -37,6 +42,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      console.log("Login - Attempting to log in with email:", email);
       const { data, error } = await supabase.functions.invoke('handle-login', {
         body: { email }
       });
@@ -50,7 +56,7 @@ const Login = () => {
         description: "We've sent you a verification code.",
       });
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Login - Error:', error);
       toast({
         title: "Error",
         description: "Something went wrong. Please try again.",

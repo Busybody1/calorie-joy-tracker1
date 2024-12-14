@@ -31,20 +31,27 @@ const Dashboard = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      console.log("Dashboard - Initial session check:", session);
       if (!session?.user?.id) {
+        console.log("Dashboard - No session found, redirecting to login");
         navigate('/login', { replace: true });
         return;
+      } else {
+        console.log("Dashboard - Valid session found:", session.user.id);
       }
     };
     checkAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log("Dashboard - Auth state changed:", { event, session });
       if (!session?.user?.id) {
+        console.log("Dashboard - Session ended, redirecting to login");
         navigate('/login', { replace: true });
       }
     });
 
     return () => {
+      console.log("Dashboard - Cleaning up auth subscription");
       subscription.unsubscribe();
     };
   }, [navigate]);
