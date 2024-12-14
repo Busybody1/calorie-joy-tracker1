@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight } from "lucide-react";
-import { format, addDays, subDays, isSameDay } from "date-fns";
+import { format, addDays, subDays, isSameDay, startOfDay } from "date-fns";
 
 interface CalendarStripProps {
   date: Date;
@@ -8,9 +8,13 @@ interface CalendarStripProps {
 }
 
 export const CalendarStrip = ({ date, onSelect }: CalendarStripProps) => {
-  const daysToShow = 13; // Show 13 days (8-20)
-  const startDate = new Date(2024, 11, 8); // December 8, 2024
+  const daysToShow = 13; // Show 13 days at a time
+  const middleIndex = Math.floor(daysToShow / 2);
+  
+  // Calculate the start date as 6 days before the selected date
+  const startDate = subDays(startOfDay(date), middleIndex);
 
+  // Generate array of dates centered around the selected date
   const dates = Array.from({ length: daysToShow }, (_, i) =>
     addDays(startDate, i)
   );
@@ -25,7 +29,7 @@ export const CalendarStrip = ({ date, onSelect }: CalendarStripProps) => {
   return (
     <div className="flex flex-col items-center space-y-2 p-2 rounded-md border bg-white">
       <div className="text-sm font-medium text-gray-600">
-        December 2024
+        {format(date, "MMMM yyyy")}
       </div>
       <div className="flex items-center gap-2">
         <Button
