@@ -56,8 +56,8 @@ const Hero = () => {
                 before:from-primary/10 before:to-transparent before:rounded-2xl before:opacity-50">
                 <div className="relative h-full w-full rounded-xl overflow-hidden">
                   <img 
-                    src="/placeholder.svg"
-                    alt="Person tracking calories" 
+                    src="/lovable-uploads/f55eed19-ba4b-4a8c-980c-0e542713ca97.png"
+                    alt="Stack of delicious pancakes with fruits" 
                     className="object-cover h-full w-full"
                   />
                 </div>

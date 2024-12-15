@@ -13,7 +13,7 @@ const Header = () => {
   return (
     <header className="fixed w-full bg-white/80 backdrop-blur-sm z-50 border-b shadow-sm">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-2">
           <div className="relative group">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-gray-400 to-gray-600 rounded-full opacity-75 group-hover:opacity-100 blur transition duration-1000 group-hover:duration-200 animate-pulse"></div>
             <img 
