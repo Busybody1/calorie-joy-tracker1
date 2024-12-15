@@ -16,7 +16,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <img 
-            src={logo} 
+            src="/lovable-uploads/ae8fa472-3077-4aa3-8e68-e70a39bf6637.png"
             alt="BusyBody Logo" 
             className="h-8 w-auto mr-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => navigate("/")}
