@@ -53,7 +53,28 @@ const Signup = () => {
         throw error;
       }
 
+      // Subscribe to newsletter
       if (data?.user) {
+        try {
+          const { error: subscribeError } = await supabase.functions.invoke('subscribe-newsletter', {
+            body: { 
+              email,
+              reactivate_existing: false,
+              send_welcome_email: false,
+              utm_source: "calofree",
+              utm_medium: "ads",
+              utm_campaign: "busybits",
+              referring_site: "www.freecaloriecounter.com/"
+            }
+          });
+
+          if (subscribeError) {
+            console.error('Newsletter subscription error:', subscribeError);
+          }
+        } catch (subscribeError) {
+          console.error('Newsletter subscription error:', subscribeError);
+        }
+
         navigate("/dashboard");
         toast({
           title: "Account Created Successfully!",
