@@ -137,6 +137,9 @@ const Signup = () => {
                 minLength={6}
               />
             </div>
+            <p className="text-sm text-muted-foreground text-center">
+              By creating an account, you'll also join our BusyBits newsletter, where we share helpful tips and updates you won't want to miss.
+            </p>
             <Button
               type="submit"
               className="w-full bg-primary hover:bg-primary/90"
