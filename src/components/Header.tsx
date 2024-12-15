@@ -16,7 +16,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
           <h1 className="text-xl font-bold">
-            <span className="text-blue-500">CaloFree Tracker</span>{" "}
+            <span className="text-[#30dcec]">CaloFree Tracker</span>{" "}
             <span className="text-sm text-gray-700">by BusyBody</span>
           </h1>
         </div>
