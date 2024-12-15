@@ -1,4 +1,4 @@
-import { Instagram, Facebook, Twitter, Youtube, TikTok, Link, Newspaper } from "lucide-react";
+import { Instagram, Facebook, Twitter, Youtube, Music2, Link, Newspaper } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -28,7 +28,7 @@ const Footer = () => {
               { Icon: Facebook, href: "https://m.facebook.com/story.php/?story_fbid=122182552952193848&id=61555815447953" },
               { Icon: Twitter, href: "https://twitter.com/1PercentBody" },
               { Icon: Youtube, href: "https://www.youtube.com/@BusyBodyFit?sub_confirmation=1" },
-              { Icon: TikTok, href: "https://www.tiktok.com/@busybody943?" },
+              { Icon: Music2, href: "https://www.tiktok.com/@busybody943?" },
             ].map(({ Icon, href }, index) => (
               <a
                 key={index}
