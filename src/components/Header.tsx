@@ -1,9 +1,27 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 const Header = () => {
   const navigate = useNavigate();
+  const [session, setSession] = useState(null);
+
+  useEffect(() => {
+    // Check current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -29,20 +47,32 @@ const Header = () => {
           </h1>
         </div>
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="ghost" 
-            className="text-gray-600 hover:text-gray-900 rounded-full"
-            onClick={() => navigate("/signup")}
-          >
-            Sign Up
-          </Button>
-          <Button 
-            variant="ghost" 
-            className="text-gray-600 hover:text-gray-900 rounded-full"
-            onClick={() => navigate("/login")}
-          >
-            Login
-          </Button>
+          {session ? (
+            <Button 
+              variant="ghost" 
+              className="text-gray-600 hover:text-gray-900 rounded-full"
+              onClick={handleLogout}
+            >
+              Logout
+            </Button>
+          ) : (
+            <>
+              <Button 
+                variant="ghost" 
+                className="text-gray-600 hover:text-gray-900 rounded-full"
+                onClick={() => navigate("/signup")}
+              >
+                Sign Up
+              </Button>
+              <Button 
+                variant="ghost" 
+                className="text-gray-600 hover:text-gray-900 rounded-full"
+                onClick={() => navigate("/login")}
+              >
+                Login
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>
