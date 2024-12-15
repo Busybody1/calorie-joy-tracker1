@@ -34,13 +34,7 @@ const Header = () => {
           >
             Login
           </Button>
-          <Button
-            variant="ghost"
-            className="text-gray-600 hover:text-gray-900 rounded-full"
-            onClick={handleLogout}
-          >
-            Logout
-          </Button>
+          {/* Logout button removed as per user request */}
           <img 
             src={logo} 
             alt="BusyBody Logo" 
