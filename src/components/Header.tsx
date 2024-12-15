@@ -15,8 +15,9 @@ const Header = () => {
     <header className="fixed w-full bg-white/80 backdrop-blur-sm z-50 border-b shadow-sm">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
-            CaloFree Tracker
+          <h1 className="text-xl font-bold">
+            <span className="text-blue-500">CaloFree Tracker</span>{" "}
+            <span className="text-sm text-gray-700">by BusyBody</span>
           </h1>
         </div>
         <div className="flex items-center space-x-4">
@@ -34,7 +35,6 @@ const Header = () => {
           >
             Login
           </Button>
-          {/* Logout button removed as per user request */}
           <img 
             src={logo} 
             alt="BusyBody Logo" 
