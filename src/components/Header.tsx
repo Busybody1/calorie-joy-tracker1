@@ -15,6 +15,12 @@ const Header = () => {
     <header className="fixed w-full bg-white/80 backdrop-blur-sm z-50 border-b shadow-sm">
       <div className="container mx-auto px-4 py-4 flex justify-between items-center">
         <div className="flex items-center">
+          <img 
+            src={logo} 
+            alt="CaloFree Logo" 
+            className="h-8 w-auto mr-2 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate("/")}
+          />
           <h1 className="text-xl font-bold">
             <span className="text-[#30dcec]">CaloFree Tracker</span>{" "}
             <span className="text-sm text-gray-700">by BusyBody</span>
@@ -35,11 +41,6 @@ const Header = () => {
           >
             Login
           </Button>
-          <img 
-            src={logo} 
-            alt="BusyBody Logo" 
-            className="h-8 w-8 rounded-full shadow-sm object-cover border-2 border-primary/20"
-          />
         </div>
       </div>
     </header>

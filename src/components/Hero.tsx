@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import heroImage from "../assets/hero.jpg";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -54,10 +55,10 @@ const Hero = () => {
                 hover:shadow-primary/20 hover:scale-[1.02] transition-all duration-500
                 before:content-[''] before:absolute before:inset-0 before:bg-gradient-to-br 
                 before:from-primary/10 before:to-transparent before:rounded-2xl before:opacity-50">
-                <div className="relative h-full w-full bg-gray-100 rounded-xl overflow-hidden">
+                <div className="relative h-full w-full rounded-xl overflow-hidden">
                   <img 
-                    src="https://images.unsplash.com/photo-1649972904349-6e44c42644a7" 
-                    alt="Woman tracking calories" 
+                    src={heroImage}
+                    alt="Person tracking calories" 
                     className="object-cover h-full w-full"
                   />
                 </div>
