@@ -13,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -39,31 +40,62 @@ const Login = () => {
     }
   };
 
+  const handleForgotPassword = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({
+        title: "Error",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsResettingPassword(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password reset email sent",
+        description: "Please check your inbox for the password reset link",
+      });
+    } catch (error: any) {
+      console.error('Password reset error:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send password reset email",
+        variant: "destructive",
+      });
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setNeedsEmailConfirmation(false);
 
     try {
-      // Basic validation
       if (!email || !password) {
         throw new Error("Please fill in all fields");
       }
 
-      // Validate email format
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
         throw new Error("Please enter a valid email address");
       }
 
-      // Attempt login with email and password
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
 
       if (error) {
-        // Check if the error is due to unconfirmed email
         if (error.message.includes("Email not confirmed") || error.message.includes("email_not_confirmed")) {
           setNeedsEmailConfirmation(true);
           throw new Error("Please confirm your email address before logging in");
@@ -72,9 +104,8 @@ const Login = () => {
       }
 
       if (data?.user) {
-        // Set session duration to 30 days
         await supabase.auth.updateUser({
-          data: { session_duration: 30 * 24 * 60 * 60 } // 30 days in seconds
+          data: { session_duration: 30 * 24 * 60 * 60 }
         });
         
         navigate("/dashboard");
@@ -144,6 +175,17 @@ const Login = () => {
                 required
                 className="w-full"
               />
+            </div>
+            <div className="text-right">
+              <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto text-sm text-primary"
+                onClick={handleForgotPassword}
+                disabled={isResettingPassword}
+              >
+                {isResettingPassword ? "Sending reset link..." : "Forgot password?"}
+              </Button>
             </div>
             <Button
               type="submit"
