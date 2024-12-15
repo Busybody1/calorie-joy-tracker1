@@ -12,6 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCredits } from "@/hooks/useCredits";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import type { Food } from "@/types/food";
 
 const Dashboard = () => {
   const [date, setDate] = useState<Date>(new Date());

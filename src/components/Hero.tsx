@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import heroImage from "../assets/hero.jpg";
 
 const Hero = () => {
   const navigate = useNavigate();
@@ -57,7 +56,7 @@ const Hero = () => {
                 before:from-primary/10 before:to-transparent before:rounded-2xl before:opacity-50">
                 <div className="relative h-full w-full rounded-xl overflow-hidden">
                   <img 
-                    src={heroImage}
+                    src="/placeholder.svg"
                     alt="Person tracking calories" 
                     className="object-cover h-full w-full"
                   />
