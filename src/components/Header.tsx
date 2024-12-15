@@ -17,7 +17,7 @@ const Header = () => {
         <div className="flex items-center">
           <img 
             src={logo} 
-            alt="CaloFree Logo" 
+            alt="BusyBody Logo" 
             className="h-8 w-auto mr-2 cursor-pointer hover:opacity-80 transition-opacity"
             onClick={() => navigate("/")}
           />
