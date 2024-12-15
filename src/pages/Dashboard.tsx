@@ -232,7 +232,8 @@ const Dashboard = () => {
               <img
                 src={logo}
                 alt="Logo"
-                className="h-10 w-10 rounded-full object-cover"
+                onClick={() => navigate('/')}
+                className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
               />
             </div>
 
