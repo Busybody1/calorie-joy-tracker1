@@ -11,15 +11,7 @@ import { format } from "date-fns";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCredits } from "@/hooks/useCredits";
 import { useNavigate } from "react-router-dom";
-
-interface Food {
-  name: string;
-  calories: number;
-  protein: number;
-  carbs: number;
-  fat: number;
-  servings: number;
-}
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const Dashboard = () => {
   const [date, setDate] = useState<Date>(new Date());
@@ -28,6 +20,7 @@ const Dashboard = () => {
   const { credits, isLoading: isLoadingCredits } = useCredits();
   const navigate = useNavigate();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     console.log("Dashboard - Effect running, isInitialLoad:", isInitialLoad);
@@ -66,7 +59,6 @@ const Dashboard = () => {
         sessionExpiry: session?.expires_at
       });
       
-      // Only redirect if it's not the initial load and we've confirmed there's no session
       if (!isInitialLoad && !session?.user?.id) {
         console.log("Dashboard - Session ended, redirecting to login");
         navigate('/login', { replace: true });
@@ -227,19 +219,26 @@ const Dashboard = () => {
     <div className="min-h-screen bg-background">
       <header className="fixed top-0 w-full bg-white/80 backdrop-blur-sm border-b z-50">
         <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-0 items-center justify-between">
+            <div className="flex items-center justify-between w-full md:w-auto">
               <img
                 src={logo}
                 alt="Logo"
                 onClick={() => navigate('/')}
                 className="h-10 w-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
               />
+              <div className="flex items-center gap-2 md:hidden">
+                <div className="text-sm font-medium text-gray-600">
+                  Credits: <span className="text-primary font-semibold">
+                    {isLoadingCredits ? "..." : credits}
+                  </span>
+                </div>
+              </div>
             </div>
 
             <CalendarStrip date={date} onSelect={setDate} />
 
-            <div className="text-sm font-medium">
+            <div className="hidden md:block text-sm font-medium">
               Credits Left:{" "}
               <span className="text-primary">
                 {isLoadingCredits ? "..." : `${credits}/30`}
@@ -249,7 +248,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 pt-24 pb-8">
+      <main className="container mx-auto px-4 pt-32 md:pt-24 pb-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
             <CardHeader>
